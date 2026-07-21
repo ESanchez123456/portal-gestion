@@ -556,6 +556,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .pp-tipo-obs{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
 .pp-tipo-dili{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
 .pp-tipo-gestion{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.pp-tipo-gestion-del{background:var(--red-l);color:var(--red);border:1px solid var(--red-b)}
 .pp-card-proc{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .pp-card-cliente{font-weight:600;font-size:12.5px;color:var(--text)}
 .pp-card-exp{font-size:11px;color:var(--text3);font-family:var(--mono)}
@@ -1923,13 +1924,10 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
 <div id="tab-paralegal" class="tab-content">
 
-  <!-- Sub-tabs por origen -->
-  <div style="display:flex;gap:0;border-bottom:2px solid var(--gray-b);margin-bottom:1rem;flex-wrap:wrap">
-    <button id="pptab-todas"      class="tg-view-tab active"   onclick="switchPPTab('todas')"      style="border-bottom:2px solid var(--dark);margin-bottom:-2px;color:var(--text)">📋 Todas <span id="pp-cnt-todas"    class="fdd-cnt show" style="background:var(--dark)">0</span></button>
-    <button id="pptab-reporte"    class="tg-view-tab"          onclick="switchPPTab('reporte')"    style="border-bottom:2px solid transparent;margin-bottom:-2px">📊 Reporte Total <span id="pp-cnt-reporte"  class="fdd-cnt show" style="background:var(--blue)">0</span></button>
-    <button id="pptab-audiencias" class="tg-view-tab"          onclick="switchPPTab('audiencias')" style="border-bottom:2px solid transparent;margin-bottom:-2px">📅 Próximas Audiencias <span id="pp-cnt-aud"  class="fdd-cnt show" style="background:var(--amber)">0</span></button>
-    <button id="pptab-gestion"    class="tg-view-tab"          onclick="switchPPTab('gestion')"    style="border-bottom:2px solid transparent;margin-bottom:-2px">⚡ Tareas de Gestión <span id="pp-cnt-gest" class="fdd-cnt show" style="background:var(--green)">0</span></button>
-    <button id="pptab-calendario" class="tg-view-tab"          onclick="switchPPTab('calendario')" style="border-bottom:2px solid transparent;margin-bottom:-2px">🗓 Calendario <span id="pp-cnt-cal"  class="fdd-cnt show" style="background:var(--purple)">0</span></button>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+    <div style="font-size:15px;font-weight:700">📋 Panel Paralegal</div>
+    <span id="pp-cnt-todas" class="fdd-cnt show" style="background:var(--dark)">0</span>
+    <span style="font-size:11.5px;color:var(--text4)">— todo lo que Gestión hace, en un solo lugar</span>
   </div>
 
   <!-- Toolbar -->
@@ -1982,6 +1980,22 @@ function eliminarTareaGestion(id){
   // Limpiar también de favoritos si estaba marcada
   const favTar = getFavTareas();
   if(favTar[id]){ delete favTar[id]; saveFavTareas(favTar); }
+
+  // Registrar en Panel Paralegal
+  if(tarea){
+    registrarEnPanel({
+      tipo:    'gestion',
+      origen:  'gestion',
+      nroId:   tarea.nroId||0,
+      nrotarea:tarea.nrotarea||0,
+      cliente: tarea.cliente||'—',
+      expediente: tarea.expediente||'—',
+      supervisor: tarea.supervisor||'—',
+      texto:   '🗑 Tarea eliminada: '+(tarea.tipo||'').replace('Gestión - ','')+(tarea.asignado?' · Asignada a: '+tarea.asignado:''),
+      autor:   '—',
+      tareaId: id
+    });
+  }
 
   updateFavBadge();
   renderGestion();
@@ -4146,12 +4160,31 @@ function onPlannerDrop(e, fecha, miembro){
   if(!plannerDragId) return;
   // Guardar reasignación
   plannerReasignaciones[plannerDragId] = miembro;
-  // Si es tarea del portal, actualizar también en localStorage
+  // Si es tarea del portal, actualizar también en localStorage y notificar en Panel Paralegal
   if(plannerDragId.startsWith('portal_')){
     const tId = plannerDragId.replace('portal_','');
     const arr = loadTareasGestion();
     const idx = arr.findIndex(t=>t.id===tId);
-    if(idx>=0){ arr[idx].asignado=miembro; saveTareasGestion(arr); }
+    if(idx>=0){
+      const anterior = arr[idx].asignado;
+      arr[idx].asignado=miembro;
+      saveTareasGestion(arr);
+      if(anterior!==miembro){
+        registrarEnPanel({
+          tipo:    'gestion',
+          origen:  'gestion',
+          nroId:   arr[idx].nroId||0,
+          nrotarea:arr[idx].nrotarea||0,
+          cliente: arr[idx].cliente||'—',
+          expediente: arr[idx].expediente||'—',
+          supervisor: arr[idx].supervisor||'—',
+          texto:   '↔ Reasignada (Planner): '+(anterior||'—')+' → '+miembro,
+          autor:   '—',
+          tareaId: tId,
+          extra:   {asignado:miembro}
+        });
+      }
+    }
   }
   plannerDragId = null;
   renderPlanner();
@@ -4937,8 +4970,9 @@ function guardarComentarioTarea(){
     localStorage.setItem('tgOverrides', JSON.stringify(overrides));
   }
 
-  // Notificar a quien agendó la tarea (si es una persona real, no el import de Excel)
-  if(tarea && tarea.agendadoPor && tarea.agendadoPor!=='—' && tarea.agendadoPor!=='Excel/MyBiG'){
+  // Registrar el comentario en Panel Paralegal (siempre) — con destinatario solo si es persona real
+  if(tarea){
+    const esDestReal = tarea.agendadoPor && tarea.agendadoPor!=='—' && tarea.agendadoPor!=='Excel/MyBiG';
     registrarEnPanel({
       tipo:    'comentario',
       origen:  'gestion',
@@ -4949,7 +4983,7 @@ function guardarComentarioTarea(){
       supervisor: tarea.supervisor||'',
       texto:   texto,
       autor:   '—',
-      destinatario: tarea.agendadoPor,
+      destinatario: esDestReal?tarea.agendadoPor:'',
       tareaId: comentarioTareaId,
       estado:  'comentario'
     });
@@ -5731,7 +5765,7 @@ function confirmarAgendarTarea(){
   arr.unshift(nueva);
   saveTareasGestion(arr);
 
-  // Registrar en Panel Paralegal si requiere aprobación
+  // Registrar en Panel Paralegal — SIEMPRE, sea que requiera aprobación o quede agendada directo
   if(estadoInicial==='Pendiente aprobación'){
     registrarEnPanel({
       tipo:    'aprobacion',
@@ -5747,6 +5781,18 @@ function confirmarAgendarTarea(){
     });
     showToast('📋 Tarea enviada al supervisor '+supervisorDelProc+' para aprobación');
   } else {
+    registrarEnPanel({
+      tipo:    'gestion',
+      origen:  'gestion',
+      nroId:   agendarProcesoId,
+      cliente: proc?proc.cliente:'—',
+      expediente: proc?proc.expediente:'—',
+      supervisor: supervisorDelProc,
+      texto:   '🆕 Nueva tarea agendada: '+tipo+' → '+asig+(fecha?' · Fecha límite: '+nueva.fecha:'')+(obs?' · '+obs:''),
+      autor:   agend||solNombre||'—',
+      tareaId: nueva.id,
+      extra:   {asignado:asig, fecha:nueva.fecha}
+    });
     showToast('✓ Tarea agendada correctamente');
   }
 
@@ -5904,23 +5950,7 @@ function guardarGestionTarea(){
 // ── PANEL PARALEGAL ──────────────────────────────────────────
 const PP_PAGE = 20;
 let ppPage = 1;
-let ppTabActivo = 'todas';
 
-function switchPPTab(tab){
-  ppTabActivo = tab;
-  ppPage = 1;
-  // Estilos de sub-tabs
-  const tabs = {todas:'var(--dark)',reporte:'var(--blue)',audiencias:'var(--amber)',gestion:'var(--green)',calendario:'var(--purple)'};
-  Object.keys(tabs).forEach(t=>{
-    const btn = document.getElementById('pptab-'+t);
-    if(!btn) return;
-    const isActive = t===tab;
-    btn.style.borderBottomColor = isActive ? tabs[t] : 'transparent';
-    btn.style.color = isActive ? tabs[t] : 'var(--text3)';
-    btn.style.fontWeight = isActive ? '600' : '400';
-  });
-  renderParalegal();
-}
 
 function getAllParalelEntries(){
   return JSON.parse(localStorage.getItem('pp_all')||'[]');
@@ -5932,19 +5962,10 @@ function renderParalegal(){
 
   const all = getAllParalelEntries();
 
-  // Actualizar contadores de sub-tabs
-  const cnts = {todas:0,reporte:0,audiencias:0,gestion:0,calendario:0};
-  all.forEach(e=>{
-    cnts.todas++;
-    if(e.origen && cnts[e.origen]!==undefined) cnts[e.origen]++;
-  });
-  Object.entries(cnts).forEach(([t,c])=>{
-    const el = document.getElementById('pp-cnt-'+(t==='todas'?'todas':t==='audiencias'?'aud':t==='gestion'?'gest':t==='calendario'?'cal':t));
-    if(el) el.textContent = c;
-  });
+  const cntEl = document.getElementById('pp-cnt-todas');
+  if(cntEl) cntEl.textContent = all.length;
 
   let entries = all.filter(e=>{
-    if(ppTabActivo !== 'todas' && e.origen !== ppTabActivo) return false;
     if(q && !(e.cliente+e.expediente+(e.texto||'')).toLowerCase().includes(q)) return false;
     if(atendFil==='0' && e.atendida) return false;
     if(atendFil==='1' && !e.atendida) return false;
@@ -5967,13 +5988,48 @@ function renderParalegal(){
       +'<div style="font-size:32px;margin-bottom:.5rem">📋</div>'
       +'<div>No hay entradas registradas.</div></div>';
   } else {
-    const tipoCls  = e=>e.tipo==='obs'?'pp-tipo-obs':e.tipo==='dili'?'pp-tipo-dili':e.tipo==='aprobacion'?'pp-tipo-aprobacion':e.tipo==='comentario'?'pp-tipo-gestion':'pp-tipo-gestion';
-    const tipoLabel= e=>e.tipo==='obs'?'Observación proceso':e.tipo==='dili'?'Nota diligencia':e.tipo==='aprobacion'?'⏳ Solicitud aprobación':e.tipo==='comentario'?'💬 Comentario de tarea':'Tarea gestión';
+    const accionPP = e=>{
+      if(e.tipo==='obs')         return {label:'📝 Observación',            cls:'pp-tipo-obs'};
+      if(e.tipo==='dili')        return {label:'📅 Nota de diligencia',      cls:'pp-tipo-dili'};
+      if(e.tipo==='aprobacion')  return {label:'⏳ Solicitud de aprobación', cls:'pp-tipo-aprobacion'};
+      if(e.tipo==='comentario')  return {label:'💬 Comentario',              cls:'pp-tipo-gestion'};
+      if(e.tipo==='gestion'){
+        const t = e.texto||'';
+        if(t.startsWith('🆕')) return {label:'🆕 Tarea nueva',        cls:'pp-tipo-gestion'};
+        if(t.startsWith('🗑')) return {label:'🗑 Tarea eliminada',    cls:'pp-tipo-gestion-del'};
+        if(t.startsWith('↔')) return {label:'↔ Reasignación',        cls:'pp-tipo-gestion'};
+        if(t.startsWith('↩')) return {label:'↩ Tarea devuelta',      cls:'pp-tipo-gestion-del'};
+        return {label:'✎ Cambio en tarea', cls:'pp-tipo-gestion'};
+      }
+      return {label:'Tarea gestión', cls:'pp-tipo-gestion'};
+    };
+    // Qué debe HACER paralegal con esta entrada — el objetivo del panel
+    const queHacer = e=>{
+      if(e.tipo==='aprobacion'){
+        if(e.estado==='aprobada')  return null;
+        if(e.estado==='rechazada') return null;
+        return '👉 Aprobar o rechazar esta solicitud de tarea.';
+      }
+      if(e.tipo==='obs')  return '👉 Revisar la observación y darle seguimiento con el equipo.';
+      if(e.tipo==='dili') return '👉 Revisar la nota de la diligencia y coordinar lo que corresponda.';
+      if(e.tipo==='comentario') return e.destinatario ? '👉 Coordinar con '+esc(e.destinatario)+' sobre este comentario.' : '👉 Dar seguimiento a este comentario.';
+      if(e.tipo==='gestion'){
+        const t = e.texto||'';
+        if(t.startsWith('🆕')) return '👉 Verificar que la tarea agendada esté correcta.';
+        if(t.startsWith('🗑')) return '👉 Confirmar que la eliminación de esta tarea es correcta.';
+        if(t.startsWith('↔')) return '👉 Confirmar la reasignación con el nuevo responsable.';
+        if(t.startsWith('↩')) return '👉 Revisar el motivo de la devolución y volver a agendar si corresponde.';
+        return '👉 Revisar el cambio realizado en esta tarea.';
+      }
+      return null;
+    };
     container.innerHTML = slice.map(e=>{
       const procUrl  = 'https://vinatea.mybig.com.ar/trabajos/overview/'+(e.nroId||0)+'/';
       const tareaUrl = e.nrotarea?'https://vinatea.mybig.com.ar/tareas/'+e.nrotarea+'/edit/':procUrl;
-      const oBadge   = e.origen?'<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--gray-l);border:1px solid var(--gray-b);color:'+origenColor[e.origen]+'">'+origenLabel[e.origen]+'</span>':'';
-      const tBadge   = '<span class="pp-card-tipo '+tipoCls(e)+'">'+tipoLabel(e)+'</span>';
+      const oBadge   = e.origen?'<span title="Sección del portal donde ocurrió" style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--gray-l);border:1px solid var(--gray-b);color:'+origenColor[e.origen]+'">'+origenLabel[e.origen]+'</span>':'';
+      const acc      = accionPP(e);
+      const tBadge   = '<span class="pp-card-tipo '+acc.cls+'" title="Tipo de acción">'+acc.label+'</span>';
+      const accionTxt = e.atendida ? null : queHacer(e);
       let extra = '';
       if(e.extra){
         if(e.extra.asignado)   extra += ' · → '+esc(e.extra.asignado);
@@ -5996,6 +6052,7 @@ function renderParalegal(){
           +'</div>'
         +'</div>'
         +'<div class="pp-card-body'+(e.tipo==='dili'?' obs-cid':'')+'">'+esc(e.texto||'—').replace(/\n/g,'<br>')+'</div>'
+        +(accionTxt?'<div style="margin:6px 0;padding:6px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);font-size:11.5px;font-weight:600;color:#1d4ed8">'+accionTxt+'</div>':'')
         +'<div class="pp-card-meta">🕐 '+esc(e.ts||'—')+(e.autor&&e.autor!=='—'?' · 👤 '+esc(e.autor):'')+extra+'</div>'
         +'<div class="pp-card-actions">'
           +(e.tipo==='aprobacion' && e.estado!=='aprobada' && e.estado!=='rechazada'
@@ -6008,7 +6065,7 @@ function renderParalegal(){
               ?'<button class="pp-btn pp-btn-resp" onclick="marcarPPAtendida(\''+e.id+'\',false)">↩ Pendiente</button>'
               :'<button class="pp-btn pp-btn-ok" onclick="marcarPPAtendida(\''+e.id+'\',true)">✓ Atendida</button>')
             :'')
-          +'<button class="pp-btn pp-btn-del" onclick="eliminarPPEntry(\''+e.id+'\')">✕ Eliminar</button>'
+          +'<button class="pp-btn pp-btn-del" title="Descarta esta notificación del panel — NO borra la tarea" onclick="eliminarPPEntry(\''+e.id+'\')">✕ Descartar</button>'
         +'</div>'
         +'</div>';
     }).join('');
