@@ -3302,9 +3302,14 @@ function procesarExcel(){
       // contradicción real).
       const _aLSentSinCoincidir=(_pL||_pNS)&&!!dT&&!!(td&&td._esPend);
       // Caso 2 (inverso): la bitácora dice que el proceso está pendiente de
-      // alguna audiencia, pero en Próxima Audiencia no hay nada agendado —
-      // es decir, falta registrar/programar esa audiencia en el sistema.
-      const _pAudSinAgendar=_bu.includes('PENDIENTE')&&_bu.includes('AUDIENCIA')&&!dT;
+      // alguna audiencia (genérica, no de sentencia), pero en Próxima
+      // Audiencia no hay nada agendado — falta registrar/programar esa
+      // audiencia en el sistema. Se excluyen las bitácoras de sentencia
+      // (lectura/nueva sentencia/casación) porque esas frases a veces
+      // incluyen la palabra "audiencia" (ej. "...sentencia en audiencia...")
+      // sin ser realmente una audiencia pendiente de agendar — esas ya las
+      // cubre el Caso 1 arriba.
+      const _pAudSinAgendar=!_pL&&!_pNS&&!_pCas&&_bu.includes('PENDIENTE')&&_bu.includes('AUDIENCIA')&&!dT;
       const _aL=_aLSentSinCoincidir||_pAudSinAgendar;
 
       return{
