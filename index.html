@@ -953,6 +953,19 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
       </div>
     </div>
 
+    <!-- RELEVANCIA -->
+    <div class="fdd" id="fdd-relevancia">
+      <div class="fdd-btn" onclick="toggleFdd('fdd-relevancia')">
+        Relevancia
+        <span class="fdd-cnt" id="cnt-relevancia"></span>
+        <span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()">
+        <div id="fdd-relevancia-items"></div>
+        <span class="fdd-clear" onclick="clearGroup('relevancia')">Limpiar</span>
+      </div>
+    </div>
+
     <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
 
     <button class="btn-sm" onclick="resetAllFilters()">
@@ -1000,13 +1013,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th style="min-width:140px" data-col="contraparte">Contraparte</th>
           <th style="min-width:130px" data-col="expediente">Expediente</th>
           <th style="min-width:95px"  data-col="supervisor">Supervisor</th>
-          <th style="min-width:105px" data-col="responsable">Responsable</th>
-          <th style="min-width:72px"  data-col="instancia">Instancia</th>
-          <th style="min-width:70px"  data-col="situacion">Situación</th>
-          <th style="min-width:80px"  data-col="relevancia">Relevancia</th>
-          <th style="min-width:65px"  data-col="pacto">Pacto</th>
-          <th style="min-width:130px" data-col="especialista"Especialista legal</th>
-          <th style="min-width:140px" data-col="distrito">Distrito Actual</th>
+          <th style="min-width:130px" data-col="especialista">Especialista legal</th>
           <th style="min-width:185px" data-col="organo">Órgano jurisdiccional</th>
           <th style="min-width:200px" data-col="bitacora">Bitácora</th>
           <th style="min-width:160px" data-col="proxTarea">Próxima tarea</th>
@@ -1023,13 +1030,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="contraparte" placeholder="Filtrar..." readonly onclick="openCvd(this,'contraparte')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-contraparte"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="expediente" placeholder="Filtrar..." readonly onclick="openCvd(this,'expediente')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-expediente"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="supervisor" placeholder="Filtrar..." readonly onclick="openCvd(this,'supervisor')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-supervisor"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="responsable" placeholder="Filtrar..." readonly onclick="openCvd(this,'responsable')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-responsable"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="instancia" placeholder="Filtrar..." readonly onclick="openCvd(this,'instancia')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-instancia"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="situacion" placeholder="Filtrar..." readonly onclick="openCvd(this,'situacion')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-situacion"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="relevancia" placeholder="Filtrar..." readonly onclick="openCvd(this,'relevancia')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-relevancia"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="pacto" placeholder="Filtrar..." readonly onclick="openCvd(this,'pacto')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-pacto"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="especialista" placeholder="Filtrar..." readonly onclick="openCvd(this,'especialista')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-especialista"></div></div></th>
-          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="distrito" placeholder="Filtrar..." readonly onclick="openCvd(this,'distrito')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-distrito"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="organo" placeholder="Filtrar..." readonly onclick="openCvd(this,'organo')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-organo"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="bitacora" placeholder="Filtrar..." readonly onclick="openCvd(this,'bitacora')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-bitacora"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="proxTarea" placeholder="Filtrar..." readonly onclick="openCvd(this,'proxTarea')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-proxTarea"></div></div></th>
@@ -2374,7 +2375,7 @@ const TAB_STATE = {
 };
 // Aliases para compatibilidad con código existente (apuntan al tab activo)
 let mf='', colFilters={};
-let fddState={estado:new Set(),instancia:new Set(),pacto:new Set()};
+let fddState={estado:new Set(),instancia:new Set(),pacto:new Set(),relevancia:new Set()};
 let page=1,audPage=1,sensPage=1,audSortAsc=true;
 let activeTab='reporte';
 
@@ -2472,7 +2473,7 @@ function clearGroup(group){
 }
 
 function updateFddCounts(){
-  ['estado','instancia','pacto'].forEach(g=>{
+  ['estado','instancia','pacto','relevancia'].forEach(g=>{
     const n=fddState[g].size;
     const cnt=document.getElementById('cnt-'+g);
     cnt.textContent=n;
@@ -2492,7 +2493,7 @@ function updateActiveChips(){
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
     'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
   };
-  ['estado','instancia','pacto'].forEach(g=>{
+  ['estado','instancia','pacto','relevancia'].forEach(g=>{
     fddState[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}
         <button onclick="removeFddItem('${g}','${k}')">×</button></div>`);
@@ -2537,7 +2538,7 @@ function clearColFilters(){
   page=1;render();updateActiveChips();
 }
 function resetAllFilters(){
-  ['estado','instancia','pacto'].forEach(g=>clearGroup(g));
+  ['estado','instancia','pacto','relevancia'].forEach(g=>clearGroup(g));
   clearColFilters();
   document.getElementById('searchbox').value='';
   document.getElementById('sup-filter').value='';
@@ -2552,7 +2553,7 @@ function getFiltered(){
   const q=(document.getElementById('searchbox').value||'').toLowerCase();
   const sup=document.getElementById('sup-filter').value;
   const dist=document.getElementById('dist-filter').value;
-  const est=fddState.estado,inst=fddState.instancia,pact=fddState.pacto;
+  const est=fddState.estado,inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia;
   return DATA.filter(r=>{
     if(q&&!(r.cliente+r.contraparte+r.expediente+r.responsable+r.organo+r.especialista+r.bitacora+r.proxTarea).toLowerCase().includes(q))return false;
     if(sup&&r.supervisor!==sup)return false;
@@ -2567,6 +2568,7 @@ function getFiltered(){
     if(est.has('tarea')&&!r.proxTarea)return false;
     if(inst.size>0&&!inst.has(r.instancia))return false;
     if(pact.size>0&&!pact.has(r.pacto))return false;
+    if(relv.size>0&&!relv.has(r.relevancia))return false;
     for(const[col,val]of Object.entries(colFilters)){
       if(!String(r[col]||'').toLowerCase().includes(val))return false;
     }
@@ -2590,7 +2592,21 @@ function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+' title="'+esc(v)+'">'+e
   const sel=document.getElementById('dist-filter');
   ds.forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;sel.appendChild(o);});
   rebuildTipos();
+  poblarFddRelevancia();
 })();
+
+// Poblar filtro múltiple de Relevancia (valores dinámicos, según lo que traiga el Excel)
+function poblarFddRelevancia(){
+  const cont=document.getElementById('fdd-relevancia-items');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.relevancia).filter(Boolean))].sort();
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group="relevancia" data-key="'+esc(v)+'" onclick="toggleFddItem(this)">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span class="fdd-dot" style="background:var(--text3)"></span>'+esc(v)
+    +'</div>'
+  )).join('');
+}
 function rebuildTipos(){
   const sel=document.getElementById('aud-tipo');
   sel.innerHTML='<option value="">Todos los tipos de audiencia</option>';
@@ -2609,7 +2625,7 @@ function render(){
   const slice=rows.slice((page-1)*PAGE,page*PAGE);
   const body=document.getElementById('tbody');
   if(!slice.length){
-    body.innerHTML='<tr><td colspan="18"><div class="empty"><span>—</span>Sin resultados</div></td></tr>';
+    body.innerHTML='<tr><td colspan="16"><div class="empty"><span>—</span>Sin resultados</div></td></tr>';
   }else{
     body.innerHTML=slice.map(r=>{
       const sc=r.sensible?'class="row-s"':r.alertLectura?'class="row-alert"':'';
@@ -2631,7 +2647,7 @@ function render(){
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
         +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
-        +tdT(r.cliente,160,'td-p')+tdT(r.contraparte,140,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+'<td>'+instBadge(r.instancia)+'</td><td>'+sitBadge(r.situacion)+'</td><td>'+relBadge(r.relevancia)+'</td><td class="td-d" style="font-size:10.5px;white-space:nowrap" title="'+esc(r.pacto)+'">'+esc(r.pacto)+'</td>'+tdT(r.especialista,130,'td-d')+tdT(r.distrito,140,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
+        +tdT(r.cliente,160,'td-p')+tdT(r.contraparte,140,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
   ? '<td><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
   : tdT(r.bitacora,200,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
         +'<td style="text-align:center">'+diasSinDili+'</td>'
@@ -3185,7 +3201,7 @@ function procesarExcel(){
 // de procesar un Excel local o porque se acaban de recibir desde Firestore.
 function finalizarVistaDespuesDeCarga(prefijoLabel){
   colFilters={};
-  ['estado','instancia','pacto'].forEach(g=>clearGroup(g));
+  ['estado','instancia','pacto','relevancia'].forEach(g=>clearGroup(g));
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
   if(typeof clearGroupAud==='function')['estado','instancia','pacto'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
@@ -3196,6 +3212,7 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
     [...new Set(DATA.map(r=>r.distrito).filter(Boolean))].sort()
       .forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;sel.appendChild(o);});
   }
+  if(typeof poblarFddRelevancia==='function')poblarFddRelevancia();
 
   rebuildTipos();
   const lbl = document.getElementById('lbl-sem');
