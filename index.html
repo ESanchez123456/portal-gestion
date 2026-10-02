@@ -5925,12 +5925,14 @@ function renderFavoritos(){
           :'<div style="font-size:11px;color:var(--text4);margin-bottom:.4rem">Sin comentarios.</div>';
         const asignadosProc = getFavUsuarios(f);
         const asignadosHtml = asignadosProc.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosProc.map(u=>esc(u)).join(', ')+'</div>':'';
+        const inactivoHtml = !proc?'<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ Este proceso ya no está activo en el Reporte Total (pasó a "De baja" o no está en el último Excel cargado) — sus datos no se pueden mostrar, pero el favorito y sus comentarios se conservan.</div>':'';
         return '<div class="fav-card">'
           +'<div class="fav-card-header"><span class="fav-star activo" onclick="toggleFav('+f.id+')" style="flex-shrink:0">⭐</span>'
           +'<div style="flex:1"><div class="fav-card-title">'+esc(proc?proc.cliente:'#'+f.id)+'</div>'
           +'<div class="fav-card-exp">'+esc(proc?proc.expediente:'')+(proc&&proc.instancia?' · <span style="color:var(--blue)">'+esc(proc.instancia)+'</span>':'')+'</div>'
           +asignadosHtml+'</div>'
           +'<a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+f.id+'/" target="_blank" style="font-size:11px">#'+f.id+'</a></div>'
+          +inactivoHtml
           +gridHtml+sentHtml
           +'<div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:.3rem">💬 Comentarios</div>'
           +histHtml
@@ -5979,6 +5981,9 @@ function renderFavoritos(){
       const adjHtml = adj.length?'<div style="margin-bottom:.4rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">📎 Adjuntos</div>'+adj.map(a=>'<div class="ag-adj-item"><span>'+(a.tipo.includes('image')?'🖼️':a.tipo.includes('pdf')?'📄':'📎')+'</span><a href="'+a.data+'" download="'+esc(a.nombre)+'">'+esc(a.nombre)+'</a></div>').join('')+'</div>':'';
       const asignadosTar = getFavUsuarios(f);
       const asignadosTarHtml = asignadosTar.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosTar.map(u=>esc(u)).join(', ')+'</div>':'';
+      const inactivoTarHtml = !tarea
+        ? '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ Esta tarea ya no existe en Tareas de Gestión (fue eliminada o ya no está en el último Excel) — el favorito y sus comentarios se conservan.</div>'
+        : (!proc ? '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ El proceso de esta tarea ya no está activo en el Reporte Total — sus datos no se pueden mostrar, pero el favorito y sus comentarios se conservan.</div>' : '');
 
       return '<div class="fav-card" style="border-left-color:var(--green)">'
         +'<div class="fav-card-header"><span class="tg-fav-star activo" data-fid="'+esc(f.id)+'" onclick="toggleFavTarea(this.dataset.fid)" style="font-size:14px;flex-shrink:0">⭐</span>'
@@ -5990,6 +5995,7 @@ function renderFavoritos(){
         +'</div>'
         +(proc?'<a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+proc.id+'/" target="_blank" style="font-size:11px">#'+proc.id+'</a>':'')
         +'</div>'
+        +inactivoTarHtml
         +gridHtml+sentHtml
         +(tarea&&tarea.obs?'<div style="padding:6px 9px;background:var(--gray-l);border-radius:var(--r);font-size:11.5px;margin-bottom:.4rem;color:var(--text3)"><b>Nota de la tarea:</b> '+esc(tarea.obs)+'</div>':'')
         +adjHtml
