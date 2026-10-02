@@ -678,6 +678,13 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 #kvLoading.show{display:flex}
 .tb-user{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px;margin-right:.75rem;padding-right:.75rem;border-right:1px solid rgba(255,255,255,.15)}
 .tb-user-av{width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.audit-row{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border-bottom:1px solid var(--gray-b)}
+.audit-row:last-child{border-bottom:none}
+.audit-av{width:32px;height:32px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.audit-body{flex:1;min-width:0}
+.audit-main{font-size:12.5px;color:var(--text);line-height:1.45}
+.audit-ctx{font-size:11.5px;color:var(--blue);margin-top:2px;line-height:1.4;word-break:break-word}
+.audit-time{flex-shrink:0;text-align:right;font-size:11px;color:var(--text4);line-height:1.5;white-space:nowrap}
 .tb-user-out{cursor:pointer;color:rgba(255,255,255,.55);text-decoration:underline;font-size:11px}
 .tb-user-out:hover{color:#fff}
 </style>
@@ -2258,14 +2265,17 @@ function registrarAuditoria(key, accion){
 
 // Registra un "visualizó" en el Control de cambios del Admin — para que quede
 // constancia de quién vio un proceso o una tarea, no solo quién lo editó.
-function registrarVista(texto){
+// texto: el verbo+objeto ("visualizó el proceso #123"); ctx: el detalle
+// del proceso/tarea relacionado (cliente · expediente · #id), que se
+// muestra como segunda línea en el Control de cambios.
+function registrarVista(texto, ctx){
   if(window.__fbLogAudit){
-    window.__fbLogAudit({key:'vista', accion:'vio', label:texto, byName: window.CURRENT_USER_NAME||''});
+    window.__fbLogAudit({key:'vista', accion:'vio', label:texto, ctx:ctx||'', byName: window.CURRENT_USER_NAME||''});
   }
 }
 function logVistaExterna(nroId){
   const proc = (typeof DATA!=='undefined') ? DATA.find(r=>r.id===nroId) : null;
-  registrarVista('🔗 Vio en MyBiG el proceso #'+nroId+(proc?' — '+(proc.cliente||''):''));
+  registrarVista('visualizó el proceso en MyBiG', '#'+nroId+(proc?' · '+(proc.cliente||'')+(proc.expediente?' · '+proc.expediente:''):''));
 }
 
 window.CURRENT_USER_EMAIL = '';
@@ -3375,7 +3385,8 @@ function renderAdmin(){
 // Une el log genérico (guardados/eliminados de KV + vistas) con el log
 // detallado de acciones de negocio (Panel Paralegal: comentarios, tareas
 // agendadas, reasignaciones, observaciones...) en una sola lista de eventos
-// legibles para el Control de cambios del Admin.
+// legibles para el Control de cambios del Admin — estilo "Vista de Control"
+// de MyBiG: quién + verbo, y debajo el proceso/tarea afectado.
 function getAdminAuditUnificado(){
   const rows = [];
   (window.__ADMIN_AUDIT_ROWS||[]).forEach(r=>{
@@ -3383,31 +3394,43 @@ function getAdminAuditUnificado(){
     const esDel   = r.accion==='delete';
     rows.push({
       ts: r.ts||0,
-      icono: esVista?'👁':esDel?'🗑':'✎',
-      accion: esVista?'Visualizó':esDel?'Eliminó':'Guardó',
-      color: esVista?'var(--text3)':esDel?'var(--red)':'var(--blue)',
-      detalle: r.label||r.key||'—',
-      quien: r.byName||r.byEmail||'—'
+      quien: r.byName||r.byEmail||'—',
+      verbo: esVista ? (r.label||'visualizó algo') : esDel ? ('eliminó '+(r.label||'un dato')) : ('guardó '+(r.label||'un dato')),
+      contexto: r.ctx||''
     });
   });
   let pp=[];
   try{ pp = JSON.parse(FSLS.getItem('pp_all')||'[]'); }catch(e){}
-  const iconosPP = {obs:'📝',dili:'📅',gestion:'📋',comentario:'💬',aprobacion:'✅'};
+  const verbosPP = {
+    obs:'agregó una observación en el proceso',
+    dili:'agregó una nota de diligencia en el proceso',
+    gestion:'gestionó una tarea en el proceso',
+    comentario:'comentó en una tarea del proceso',
+    aprobacion:'solicitó aprobación de tarea en el proceso'
+  };
   pp.forEach(e=>{
     let ts=0;
     const m = /^pp_(\d+)_/.exec(e.id||'');
     if(m) ts = Number(m[1]);
     const ctx = [e.cliente&&e.cliente!=='—'?e.cliente:'', e.expediente&&e.expediente!=='—'?e.expediente:'', e.nroId?'#'+e.nroId:''].filter(Boolean).join(' · ');
     rows.push({
-      ts, icono: iconosPP[e.tipo]||'📌',
-      accion: 'Acción',
-      color: 'var(--green)',
-      detalle: (ctx?ctx+' — ':'')+(e.texto||''),
-      quien: e.autor||'—'
+      ts,
+      quien: e.autor||'—',
+      verbo: verbosPP[e.tipo]||'realizó una acción en el proceso',
+      contexto: (ctx?ctx+' — ':'')+(e.texto||'')
     });
   });
   rows.sort((a,b)=>b.ts-a.ts);
   return rows;
+}
+
+const AUDIT_AV_COLORS = ['var(--blue)','var(--green)','var(--amber)','var(--purple)','var(--red)','#64748b'];
+function avatarIniciales(nombre){
+  return (nombre||'?').trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase() || '?';
+}
+function avatarColor(nombre){
+  let h=0; for(let i=0;i<(nombre||'').length;i++) h=(h*31+nombre.charCodeAt(i))>>>0;
+  return AUDIT_AV_COLORS[h%AUDIT_AV_COLORS.length];
 }
 
 function renderAdminAuditList(){
@@ -3438,7 +3461,7 @@ function renderAdminAuditList(){
   if(desde){ const dIni=new Date(desde+'T00:00:00').getTime(); rows = rows.filter(r=>r.ts>=dIni); }
   if(hasta){ const dFin=new Date(hasta+'T23:59:59').getTime(); rows = rows.filter(r=>r.ts<=dFin); }
   if(q){
-    rows = rows.filter(r=>(r.detalle||'').toLowerCase().includes(q) || (r.quien||'').toLowerCase().includes(q) || (r.accion||'').toLowerCase().includes(q));
+    rows = rows.filter(r=>(r.contexto||'').toLowerCase().includes(q) || (r.quien||'').toLowerCase().includes(q) || (r.verbo||'').toLowerCase().includes(q));
   }
 
   const cnt = document.getElementById('admin-audit-count');
@@ -3449,16 +3472,20 @@ function renderAdminAuditList(){
     return;
   }
   wrap.innerHTML = rows.slice(0,400).map(r=>{
-    const fecha   = r.ts ? new Date(r.ts).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    const detalle = (r.detalle||'—').toString().replace(/</g,'&lt;');
+    const d = r.ts ? new Date(r.ts) : null;
+    const fecha   = d ? d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const hora    = d ? d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}) : '';
     const quien   = (r.quien||'—').toString().replace(/</g,'&lt;');
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--gray-b);font-size:12px">'+
-      '<span style="min-width:20px;flex-shrink:0;text-align:center">'+r.icono+'</span>'+
-      '<span style="color:'+r.color+';font-weight:600;min-width:72px;flex-shrink:0">'+r.accion+'</span>'+
-      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+detalle+'">'+detalle+'</span>'+
-      '<span style="color:var(--text3);min-width:140px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+quien+'</span>'+
-      '<span style="color:var(--text4);min-width:150px;flex-shrink:0;text-align:right">'+fecha+'</span>'+
-      '</div>';
+    const verbo   = (r.verbo||'').toString().replace(/</g,'&lt;');
+    const ctx     = (r.contexto||'').toString().replace(/</g,'&lt;');
+    return '<div class="audit-row">'
+      +'<div class="audit-av" style="background:'+avatarColor(r.quien)+'">'+esc(avatarIniciales(r.quien))+'</div>'
+      +'<div class="audit-body">'
+        +'<div class="audit-main"><strong>'+quien+'</strong> '+verbo+'</div>'
+        +(ctx?'<div class="audit-ctx">'+ctx+'</div>':'')
+      +'</div>'
+      +'<div class="audit-time"><div>'+fecha+'</div><div>'+hora+' hs.</div></div>'
+      +'</div>';
   }).join('');
 }
 
@@ -5723,7 +5750,7 @@ function abrirComentariosTarea(id){
   comentarioTareaId = id;
   const t = getAllTareasGestion().find(x=>x.id===id);
   document.getElementById('com-tarea-info').textContent = t ? (t.tipo||'—')+' — '+(t.cliente||'').slice(0,40) : '#'+id;
-  registrarVista('💬 Vio comentarios de tarea '+(t?(t.tipo||'').replace('Gestión - ','')+' — '+(t.cliente||''):'#'+id));
+  registrarVista('visualizó los comentarios de una tarea', t?((t.tipo||'').replace('Gestión - ','')+' · '+(t.cliente||'')):'#'+id);
   document.getElementById('com-nuevo').value='';
   document.getElementById('com-cnt').textContent='0/250';
   renderComentariosTarea();
@@ -6411,10 +6438,10 @@ function abrirModalAgendar(id){
       info.innerHTML = '<strong>#'+id+' — '+esc(proc.cliente)+'</strong>'
         +'<span style="color:var(--text3)">'+esc(proc.expediente)+'</span>'
         +(proc.instancia?'<span class="badge b-n" style="margin-left:6px;font-size:10px">'+esc(proc.instancia)+'</span>':'');
-      registrarVista('👁 Vio el proceso #'+id+' — '+(proc.cliente||''));
+      registrarVista('visualizó el proceso', '#'+id+' · '+(proc.cliente||'')+(proc.expediente?' · '+proc.expediente:''));
     } else {
       info.innerHTML = '<strong>#'+id+'</strong>';
-      registrarVista('👁 Vio el proceso #'+id);
+      registrarVista('visualizó el proceso', '#'+id);
     }
   } else {
     // Abierto desde toolbar (sin proceso preseleccionado)
@@ -7084,6 +7111,7 @@ window.__fbLogAudit = function(entry){
     key:     entry.key   || '',
     accion:  entry.accion|| '',
     label:   entry.label || '',
+    ctx:     entry.ctx    || '',
     byEmail: auth.currentUser ? auth.currentUser.email : '',
     byName:  entry.byName|| (auth.currentUser ? auth.currentUser.email : ''),
     ts:      Date.now()
