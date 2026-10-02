@@ -152,6 +152,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .fdd-item.active .fdd-check-mark{display:block;color:#fff}
 .fdd-clear{display:block;text-align:center;padding:5px;font-size:11px;color:var(--text3);cursor:pointer;border-radius:4px;margin-top:4px;border-top:1px solid var(--gray-b);padding-top:8px}
 .fdd-clear:hover{color:var(--red)}
+.fdd-search{width:100%;padding:6px 9px;margin-bottom:6px;border:1px solid var(--gray-b);border-radius:6px;font-size:11.5px;font-family:var(--font);outline:none;color:var(--text2)}
+.fdd-search:focus{border-color:var(--blue)}
+.fdd-panel-scroll{max-height:260px;overflow-y:auto}
 
 /* Chips filtros activos */
 .active-filters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem}
@@ -645,6 +648,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .col-ext{}
 .cols-collapsed .col-ext{display:none}
 #aud-table-wrap table{table-layout:auto;width:max-content;min-width:100%}
+#rep-table{table-layout:auto;width:max-content;min-width:100%}
 .btn-cols-toggle{padding:5px 11px;border-radius:var(--r);border:1px solid var(--gray-b);background:var(--white);font-size:11.5px;cursor:pointer;font-family:var(--font);color:var(--text3);transition:all .15s;white-space:nowrap}
 .btn-cols-toggle:hover{border-color:var(--dark);color:var(--dark)}
 .btn-cols-toggle.expanded{background:var(--dark);color:#fff;border-color:var(--dark)}
@@ -877,6 +881,22 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
   <!-- 3 PÍLDORAS DROPDOWN -->
   <div class="filter-bar" id="filter-bar">
 
+    <!-- CLIENTE (filtro múltiple) -->
+    <div class="fdd" id="fdd-cliente">
+      <div class="fdd-btn" onclick="toggleFdd('fdd-cliente')">
+        Cliente
+        <span class="fdd-cnt" id="cnt-cliente"></span>
+        <span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()" style="min-width:240px">
+        <input type="text" class="fdd-search" placeholder="Buscar cliente..." oninput="filtrarFddCliente(this.value)">
+        <div id="fdd-cliente-items" class="fdd-panel-scroll"></div>
+        <span class="fdd-clear" onclick="clearGroup('cliente')">Limpiar</span>
+      </div>
+    </div>
+
+    <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
+
     <!-- ESTADO -->
     <div class="fdd" id="fdd-estado">
       <div class="fdd-btn" onclick="toggleFdd('fdd-estado')">
@@ -1010,21 +1030,21 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
   </div>
 
   <div class="table-wrap-outer"><div class="table-wrap">
-    <table>
+    <table id="rep-table">
       <thead>
         <tr id="thead-main">
           <th class="cb-th"><input type="checkbox" class="row-cb" id="cb-all" onclick="toggleAllRows(this)"></th>
           <th class="td-gestion-ind" title="Tareas de Gestión">⚡</th>
           <th style="width:28px;min-width:28px;padding:0 4px;text-align:center" title="Favorito">⭐</th>
-          <th style="min-width:65px" data-col="id">ID</th>
-          <th style="min-width:160px" data-col="cliente">Cliente</th>
-          <th style="min-width:140px" data-col="contraparte">Contraparte</th>
+          <th style="width:58px;min-width:58px;max-width:58px" data-col="id">ID</th>
+          <th style="width:130px;min-width:130px;max-width:130px" data-col="cliente">Cliente</th>
+          <th style="width:110px;min-width:110px;max-width:110px" data-col="contraparte">Contraparte</th>
           <th style="min-width:130px" data-col="expediente">Expediente</th>
           <th style="min-width:95px"  data-col="supervisor">Supervisor</th>
           <th style="min-width:105px" data-col="responsable">Responsable</th>
           <th style="min-width:130px" data-col="especialista">Especialista legal</th>
           <th style="min-width:185px" data-col="organo">Órgano jurisdiccional</th>
-          <th style="min-width:200px" data-col="bitacora">Bitácora</th>
+          <th style="width:160px;min-width:160px;max-width:160px" data-col="bitacora">Bitácora</th>
           <th style="min-width:160px" data-col="proxTarea">Próxima tarea</th>
           <th style="min-width:175px" data-col="proxDiligencia">Próxima audiencia</th>
           <th style="min-width:75px" data-col="ultimaDiliFecha">Días s/dilig.</th>
@@ -1092,6 +1112,18 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
   <!-- Pills Estado/Instancia/Pacto — Audiencias -->
   <div class="filter-bar" id="filter-bar-aud">
+    <!-- CLIENTE (filtro múltiple) -->
+    <div class="fdd" id="aud-fdd-cliente">
+      <div class="fdd-btn" onclick="toggleFdd('aud-fdd-cliente')">Cliente
+        <span class="fdd-cnt" id="aud-cnt-cliente"></span><span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()" style="min-width:240px">
+        <input type="text" class="fdd-search" placeholder="Buscar cliente..." oninput="filtrarFddClienteAud(this.value)">
+        <div id="fdd-cliente-items-aud" class="fdd-panel-scroll"></div>
+        <span class="fdd-clear" onclick="clearGroupAud('cliente')">Limpiar</span>
+      </div>
+    </div>
+    <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
     <!-- ESTADO -->
     <div class="fdd" id="aud-fdd-estado">
       <div class="fdd-btn" onclick="toggleFdd('aud-fdd-estado')">Estado
@@ -1181,7 +1213,8 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th class="cb-th"><input type="checkbox" class="row-cb" id="cb-all-aud" onclick="toggleAllRows(this,'aud')"></th>
           <th class="td-gestion-ind" title="Tareas de Gestión">⚡</th>
           <th style="width:28px;min-width:28px;padding:0 4px;text-align:center" title="Favorito">⭐</th>
-          <th style="min-width:65px">ID</th>
+          <th style="width:58px;min-width:58px;max-width:58px">ID</th>
+          <th style="width:72px;min-width:72px;max-width:72px">ID Tarea</th>
           <th style="min-width:150px">Cliente</th>
           <th class="col-ext" style="min-width:130px">Contraparte</th>
           <th style="min-width:125px">Expediente</th>
@@ -1191,12 +1224,11 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th class="col-ext" style="min-width:65px">Situación</th>
           <th class="col-ext" style="min-width:68px">Relevancia</th>
           <th class="col-ext" style="min-width:60px">Pacto</th>
-          <th class="col-ext" style="min-width:120px"Especialista legal</th>
+          <th class="col-ext" style="min-width:120px">Especialista legal</th>
           <th class="col-ext" style="min-width:130px">Distrito</th>
           <th style="min-width:175px">Órgano jurisdiccional</th>
           <th class="col-ext" style="min-width:185px">Bitácora</th>
           <th style="min-width:200px">Tipo de audiencia</th>
-          <th style="min-width:85px">ID Tarea</th>
           <th style="min-width:110px;cursor:pointer" onclick="sortAud()">Fecha y hora ↕</th>
           <th style="min-width:70px">Días</th>
           <th style="min-width:85px">Gestión</th>
@@ -1206,6 +1238,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th></th>
           <th></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="id" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'id','aud')"><div class="col-val-dropdown" id="cvd-aud-id"></div></div></th>
+          <th></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="cliente" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'cliente','aud')"><div class="col-val-dropdown" id="cvd-aud-cliente"></div></div></th>
           <th class="col-ext"><div class="col-filter-wrap"><input class="col-filter-inp" data-col="contraparte" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'contraparte','aud')"><div class="col-val-dropdown" id="cvd-aud-contraparte"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="expediente" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'expediente','aud')"><div class="col-val-dropdown" id="cvd-aud-expediente"></div></div></th>
@@ -1220,7 +1253,6 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="organo" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'organo','aud')"><div class="col-val-dropdown" id="cvd-aud-organo"></div></div></th>
           <th class="col-ext"><div class="col-filter-wrap"><input class="col-filter-inp" data-col="bitacora" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'bitacora','aud')"><div class="col-val-dropdown" id="cvd-aud-bitacora"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="proxDiligencia" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'proxDiligencia','aud')"><div class="col-val-dropdown" id="cvd-aud-proxDiligencia"></div></div></th>
-          <th></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="proxDiliFecha" data-tab="aud" placeholder="Filtrar..." readonly onclick="openCvdTab(this,'proxDiliFecha','aud')"><div class="col-val-dropdown" id="cvd-aud-proxDiliFecha"></div></div></th>
           <th></th>
           <th></th>
@@ -2383,7 +2415,7 @@ const TAB_STATE = {
 };
 // Aliases para compatibilidad con código existente (apuntan al tab activo)
 let mf='', colFilters={};
-let fddState={estado:new Set(),instancia:new Set(),pacto:new Set(),relevancia:new Set()};
+let fddState={estado:new Set(),instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set()};
 let page=1,audPage=1,sensPage=1,audSortAsc=true;
 let activeTab='reporte';
 
@@ -2403,7 +2435,7 @@ function toggleFdd(id){
 }
 
 // ── FDD AUDIENCIAS (independiente de Reporte Total) ────────────
-let fddStateAud = {estado:new Set(), instancia:new Set(), pacto:new Set()};
+let fddStateAud = {estado:new Set(), instancia:new Set(), pacto:new Set(), cliente:new Set()};
 
 function toggleFddItemAud(el){
   el.classList.toggle('active');
@@ -2421,7 +2453,7 @@ function clearGroupAud(group){
 }
 
 function updateFddCountsAud(){
-  ['estado','instancia','pacto'].forEach(g=>{
+  ['estado','instancia','pacto','cliente'].forEach(g=>{
     const n = fddStateAud[g].size;
     const cnt = document.getElementById('aud-cnt-'+g);
     if(cnt){ cnt.textContent=n; cnt.classList.toggle('show',n>0); }
@@ -2443,7 +2475,7 @@ function updateActiveChipsAud(){
     'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
   };
   const chips = [];
-  ['estado','instancia','pacto'].forEach(g=>{
+  ['estado','instancia','pacto','cliente'].forEach(g=>{
     fddStateAud[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}<button onclick="removeAudFddItem('${g}','${k}')">×</button></div>`);
     });
@@ -2459,7 +2491,7 @@ function removeAudFddItem(group, key){
 }
 
 function resetAllFiltersAud(){
-  ['estado','instancia','pacto'].forEach(g=>clearGroupAud(g));
+  ['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
   colFiltersAud = {};
   document.querySelectorAll('[data-tab="aud"].col-filter-inp').forEach(i=>{i.value='';i.classList.remove('has-value');});
   audPage=1; renderAud(); updateActiveChipsAud();
@@ -2481,7 +2513,7 @@ function clearGroup(group){
 }
 
 function updateFddCounts(){
-  ['estado','instancia','pacto','relevancia'].forEach(g=>{
+  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>{
     const n=fddState[g].size;
     const cnt=document.getElementById('cnt-'+g);
     cnt.textContent=n;
@@ -2501,7 +2533,7 @@ function updateActiveChips(){
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
     'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
   };
-  ['estado','instancia','pacto','relevancia'].forEach(g=>{
+  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>{
     fddState[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}
         <button onclick="removeFddItem('${g}','${k}')">×</button></div>`);
@@ -2546,7 +2578,7 @@ function clearColFilters(){
   page=1;render();updateActiveChips();
 }
 function resetAllFilters(){
-  ['estado','instancia','pacto','relevancia'].forEach(g=>clearGroup(g));
+  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
   clearColFilters();
   document.getElementById('searchbox').value='';
   document.getElementById('sup-filter').value='';
@@ -2561,7 +2593,7 @@ function getFiltered(){
   const q=(document.getElementById('searchbox').value||'').toLowerCase();
   const sup=document.getElementById('sup-filter').value;
   const dist=document.getElementById('dist-filter').value;
-  const est=fddState.estado,inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia;
+  const est=fddState.estado,inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente;
   return DATA.filter(r=>{
     if(q&&!(r.cliente+r.contraparte+r.expediente+r.responsable+r.organo+r.especialista+r.bitacora+r.proxTarea).toLowerCase().includes(q))return false;
     if(sup&&r.supervisor!==sup)return false;
@@ -2577,6 +2609,7 @@ function getFiltered(){
     if(inst.size>0&&!inst.has(r.instancia))return false;
     if(pact.size>0&&!pact.has(r.pacto))return false;
     if(relv.size>0&&!relv.has(r.relevancia))return false;
+    if(clienteSet.size>0&&!clienteSet.has(r.cliente))return false;
     for(const[col,val]of Object.entries(colFilters)){
       if(!String(r[col]||'').toLowerCase().includes(val))return false;
     }
@@ -2592,7 +2625,7 @@ function instBadge(i){
 function sitBadge(s){return s==='EJECUCION'?'<span class="badge b-g">Ejec.</span>':'<span class="badge b-b">En giro</span>';}
 function relBadge(r){return r==='SENSIBLE'?'<span class="badge b-r">Sensible</span>':'<span style="color:var(--text4)">—</span>';}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+' title="'+esc(v)+'">'+esc(v)+'</td>';}
+function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+w+'px"':'')+' title="'+esc(v)+'">'+esc(v)+'</td>';}
 
 // Poblar distritos
 (function(){
@@ -2601,6 +2634,8 @@ function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+' title="'+esc(v)+'">'+e
   ds.forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;sel.appendChild(o);});
   rebuildTipos();
   poblarFddRelevancia();
+  poblarFddCliente();
+  poblarFddClienteAud();
 })();
 
 // Poblar filtro múltiple de Relevancia (valores dinámicos, según lo que traiga el Excel)
@@ -2614,6 +2649,44 @@ function poblarFddRelevancia(){
     +'<span class="fdd-dot" style="background:var(--text3)"></span>'+esc(v)
     +'</div>'
   )).join('');
+}
+
+// Poblar filtro múltiple de Cliente (Reporte Total) — con buscador interno por el volumen de clientes
+function poblarFddCliente(){
+  const cont=document.getElementById('fdd-cliente-items');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.cliente).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group="cliente" data-key="'+esc(v)+'" data-search="'+esc(v.toLowerCase())+'" onclick="toggleFddItem(this)" title="'+esc(v)+'" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span>'+esc(v.length>42?v.slice(0,42)+'…':v)+'</span>'
+    +'</div>'
+  )).join('');
+}
+function filtrarFddCliente(q){
+  const needle=(q||'').toLowerCase();
+  document.querySelectorAll('#fdd-cliente-items .fdd-item').forEach(it=>{
+    it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
+  });
+}
+
+// Lo mismo, para la pestaña Próximas Audiencias
+function poblarFddClienteAud(){
+  const cont=document.getElementById('fdd-cliente-items-aud');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.cliente).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group-aud="cliente" data-key="'+esc(v)+'" data-search="'+esc(v.toLowerCase())+'" onclick="toggleFddItemAud(this)" title="'+esc(v)+'" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span>'+esc(v.length>42?v.slice(0,42)+'…':v)+'</span>'
+    +'</div>'
+  )).join('');
+}
+function filtrarFddClienteAud(q){
+  const needle=(q||'').toLowerCase();
+  document.querySelectorAll('#fdd-cliente-items-aud .fdd-item').forEach(it=>{
+    it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
+  });
 }
 function rebuildTipos(){
   const sel=document.getElementById('aud-tipo');
@@ -2654,10 +2727,10 @@ function render(){
         +'<td class="cb-td" onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" data-id="'+r.id+'" data-tab="rep" '+checked+' onchange="onRowCheck(this,\'rep\')"></td>'
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
-        +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
-        +tdT(r.cliente,160,'td-p')+tdT(r.contraparte,140,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
-  ? '<td><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
-  : tdT(r.bitacora,200,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
+        +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
+        +tdT(r.cliente,130,'td-p')+tdT(r.contraparte,110,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
+  ? '<td style="max-width:160px"><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
+  : tdT(r.bitacora,160,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
         +'<td style="text-align:center">'+diasSinDili+'</td>'
         +'<td><button class="btn-agendar btn-agendar-fila" data-row-id="'+r.id+'" onclick="event.stopPropagation();abrirModalAgendar('+r.id+')">+ Gestión</button></td>'
         +'<td style="text-align:center">'+getObsBadge(r.id)+'</td>'
@@ -2718,6 +2791,9 @@ function renderAud(){
     // FDD Pacto
     const pact=fddStateAud.pacto;
     if(pact.size&&!pact.has(r.pacto))return false;
+    // FDD Cliente
+    const clienteSetAud=fddStateAud.cliente;
+    if(clienteSetAud.size&&!clienteSetAud.has(r.cliente))return false;
     // Filtro fecha desde/hasta
     if(desde||hasta){
       const ft=parseAudFecha(r.proxDiliFecha);
@@ -2732,7 +2808,7 @@ function renderAud(){
   if(audPage>tp)audPage=1;
   const slice=rows.slice((audPage-1)*PAGE,audPage*PAGE);
   const body=document.getElementById('aud-tbody');
-  if(!slice.length){body.innerHTML='<tr><td colspan="18"><div class="empty"><span>—</span>Sin audiencias</div></td></tr>';}
+  if(!slice.length){body.innerHTML='<tr><td colspan="22"><div class="empty"><span>—</span>Sin audiencias</div></td></tr>';}
   else{body.innerHTML=slice.map(r=>{
     const sc=r.sensible?'class="row-s"':'';
     const checked=selectedRows.aud.has(r.id)?'checked':'';
@@ -2741,7 +2817,8 @@ function renderAud(){
       +'<td class="cb-td" onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" data-id="'+r.id+'" data-tab="aud" '+checked+' onchange="onRowCheck(this,\'aud\')"></td>'
       +getGestionBadge(r.id)
       +getFavBadge(r.id)
-      +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank">'+r.id+'</a></td>'
+      +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank">'+r.id+'</a></td>'
+      +'<td style="max-width:72px;overflow:hidden;text-overflow:ellipsis">'+(r.proxDiliId?'<a class="id-link" href="https://vinatea.mybig.com.ar/tareas/'+r.proxDiliId+'/edit/" target="_blank">#'+r.proxDiliId+'</a>':'<span style="color:var(--text4)">—</span>')+'</td>'
       +tdT(r.cliente,150,'td-p')
       +'<td class="col-ext td-d" title="'+esc(r.contraparte||'')+'">'+esc((r.contraparte||'').slice(0,20)+(r.contraparte&&r.contraparte.length>20?'…':''))+'</td>'
       +'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'
@@ -2755,7 +2832,6 @@ function renderAud(){
       +tdT(r.organo,175,'td-d')
       +'<td class="col-ext td-d" style="font-size:11px">'+esc((r.bitacora||'').slice(0,24)+(r.bitacora&&r.bitacora.length>24?'…':''))+'</td>'
       +'<td><span class="badge b-a">'+esc(r.proxDiligencia)+'</span></td>'
-      +'<td>'+(r.proxDiliId?'<a class="id-link" href="https://vinatea.mybig.com.ar/tareas/'+r.proxDiliId+'/edit/" target="_blank">#'+r.proxDiliId+'</a>':'<span style="color:var(--text4)">—</span>')+'</td>'
       +'<td><strong style="color:var(--amber)">'+esc(r.proxDiliFecha)+'</strong>'+(r.proxDiliHora?' <span style="color:var(--text3);font-size:11px">'+esc(r.proxDiliHora)+'</span>':'')+'</td>'
       +'<td style="text-align:center;font-size:11px">'+diasLabel(r.proxDiliFecha)+'</td>'
       +'<td><button class="btn-agendar" onclick="event.stopPropagation();abrirModalAgendar('+r.id+')">+ Gestión</button></td>'
@@ -3186,9 +3262,9 @@ function procesarExcel(){
 
     // Reset filtros
     colFilters={};
-    ['estado','instancia','pacto'].forEach(g=>clearGroup(g));
+    ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
     if(typeof colFiltersAud!=='undefined')colFiltersAud={};
-    if(typeof clearGroupAud==='function')['estado','instancia','pacto'].forEach(g=>clearGroupAud(g));
+    if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
     page=1;audPage=1;
 
     finalizarVistaDespuesDeCarga('Actualizado · ');
@@ -3209,9 +3285,9 @@ function procesarExcel(){
 // de procesar un Excel local o porque se acaban de recibir desde Firestore.
 function finalizarVistaDespuesDeCarga(prefijoLabel){
   colFilters={};
-  ['estado','instancia','pacto','relevancia'].forEach(g=>clearGroup(g));
+  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
-  if(typeof clearGroupAud==='function')['estado','instancia','pacto'].forEach(g=>clearGroupAud(g));
+  if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
 
   const sel=document.getElementById('dist-filter');
@@ -3221,7 +3297,8 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
       .forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;sel.appendChild(o);});
   }
   if(typeof poblarFddRelevancia==='function')poblarFddRelevancia();
-
+  if(typeof poblarFddCliente==='function')poblarFddCliente();
+  if(typeof poblarFddClienteAud==='function')poblarFddClienteAud();
   rebuildTipos();
   const lbl = document.getElementById('lbl-sem');
   if(lbl) lbl.textContent=(prefijoLabel||'Actualizado · ')+DATA.length.toLocaleString()+' procesos · '+TAREAS_GESTION_EXCEL.length+' tareas';
@@ -5404,7 +5481,12 @@ function haySentenciasDisponibles(){
   return !!((rawRT&&rawRT.length) || (window.SENTENCIAS_BY_ID && Object.keys(window.SENTENCIAS_BY_ID).length));
 }
 function getSentencias(nroId){
-  const cl = v=>String(v==null?'':v).trim();
+  // "null"/"undefined" como string (no el valor real) pueden venir así desde el
+  // Excel/Firestore si el campo estaba vacío — se tratan igual que vacío.
+  const cl = v=>{
+    const s = String(v==null?'':v).trim();
+    return (s.toLowerCase()==='null'||s.toLowerCase()==='undefined') ? '' : s;
+  };
   // Preferir rawRT local (recién subido en esta sesión); si no, usar el mapa
   // liviano sincronizado desde Firestore (para quienes no subieron el Excel).
   const fila = (rawRT && rawRT.length ? rawRT.find(r=>Number(r['Nro']||r['nro']||0)===nroId) : null)
@@ -5982,7 +6064,8 @@ function renderFavoritos(){
           {l:'Cuantía',v:proc.cuantia?('S/ '+fmtMonto(proc.cuantia)):'—'},{l:'Reposición',v:proc.reposicion||'—'},
         ]:[];
         const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
-        const sentHtml = haySentenciasDisponibles() ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(f.id)+'</div>' : '';
+        const sentsF = haySentenciasDisponibles() ? getSentencias(f.id) : [];
+        const sentHtml = sentsF.length ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(f.id)+'</div>' : '';
         const histHtml = hist.length
           ?'<div style="max-height:100px;overflow-y:auto;margin-bottom:.4rem;display:flex;flex-direction:column;gap:4px">'+hist.map((h,i)=>'<div style="padding:5px 9px;background:var(--gray-l);border-radius:var(--r);border-left:3px solid #f59e0b;font-size:11.5px"><div>'+esc(h.texto)+'</div><div style="font-size:10px;color:var(--text4);display:flex;justify-content:space-between"><span>'+esc(h.fecha||'')+'</span><button onclick="borrarFavComentario('+f.id+','+i+')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0">✕</button></div></div>').join('')+'</div>'
           :'<div style="font-size:11px;color:var(--text4);margin-bottom:.4rem">Sin comentarios.</div>';
@@ -6036,7 +6119,8 @@ function renderFavoritos(){
         {l:'Cuantía',v:proc.cuantia?('S/ '+fmtMonto(proc.cuantia)):'—'},{l:'Reposición',v:proc.reposicion||'—'},
       ]:[];
       const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
-      const sentHtml = (proc && haySentenciasDisponibles()) ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(proc.id)+'</div>' : '';
+      const sentsTar = (proc && haySentenciasDisponibles()) ? getSentencias(proc.id) : [];
+      const sentHtml = sentsTar.length ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(proc.id)+'</div>' : '';
 
       const histHtml = hist.length
         ?'<div style="max-height:100px;overflow-y:auto;margin-bottom:.4rem;display:flex;flex-direction:column;gap:4px">'+hist.map((h,i)=>'<div style="padding:5px 9px;background:var(--gray-l);border-radius:var(--r);border-left:3px solid var(--green);font-size:11.5px"><div>'+esc(h.texto)+'</div><div style="font-size:10px;color:var(--text4);display:flex;justify-content:space-between"><span>'+esc(h.fecha||'')+'</span><button data-tid="'+esc(f.id)+'" data-tidx="'+i+'" onclick="borrarFavTareaComentario(this.dataset.tid,+this.dataset.tidx)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0">✕</button></div></div>').join('')+'</div>'
