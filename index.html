@@ -897,34 +897,6 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
     <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
 
-    <!-- ESTADO -->
-    <div class="fdd" id="fdd-estado">
-      <div class="fdd-btn" onclick="toggleFdd('fdd-estado')">
-        Estado
-        <span class="fdd-cnt" id="cnt-estado"></span>
-        <span style="font-size:12px">▾</span>
-      </div>
-      <div class="fdd-panel" onclick="event.stopPropagation()">
-        <div class="fdd-item c-red" data-group="estado" data-key="sensible" onclick="toggleFddItem(this)">
-          <div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="fdd-dot" style="background:var(--red)"></span>Solo sensibles
-        </div>
-        <div class="fdd-item c-green" data-group="estado" data-key="ejecucion" onclick="toggleFddItem(this)">
-          <div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="fdd-dot" style="background:var(--green)"></span>Solo ejecución
-        </div>
-        <div class="fdd-item c-blue" data-group="estado" data-key="giro" onclick="toggleFddItem(this)">
-          <div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="fdd-dot" style="background:var(--blue)"></span>Solo en giro
-        </div>
-        <div class="fdd-item c-blue" data-group="estado" data-key="tarea" onclick="toggleFddItem(this)">
-          <div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <span class="fdd-dot" style="background:var(--blue)"></span>Con tarea pendiente
-        </div>
-        <span class="fdd-clear" onclick="clearGroup('estado')">Limpiar</span>
-      </div>
-    </div>
-
     <!-- INSTANCIA -->
     <div class="fdd" id="fdd-instancia">
       <div class="fdd-btn" onclick="toggleFdd('fdd-instancia')">
@@ -2415,7 +2387,7 @@ const TAB_STATE = {
 };
 // Aliases para compatibilidad con código existente (apuntan al tab activo)
 let mf='', colFilters={};
-let fddState={estado:new Set(),instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set()};
+let fddState={instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set()};
 let page=1,audPage=1,sensPage=1,audSortAsc=true;
 let activeTab='reporte';
 
@@ -2513,7 +2485,7 @@ function clearGroup(group){
 }
 
 function updateFddCounts(){
-  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente'].forEach(g=>{
     const n=fddState[g].size;
     const cnt=document.getElementById('cnt-'+g);
     cnt.textContent=n;
@@ -2533,7 +2505,7 @@ function updateActiveChips(){
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
     'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
   };
-  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente'].forEach(g=>{
     fddState[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}
         <button onclick="removeFddItem('${g}','${k}')">×</button></div>`);
@@ -2578,7 +2550,7 @@ function clearColFilters(){
   page=1;render();updateActiveChips();
 }
 function resetAllFilters(){
-  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
   clearColFilters();
   document.getElementById('searchbox').value='';
   document.getElementById('sup-filter').value='';
@@ -2593,7 +2565,7 @@ function getFiltered(){
   const q=(document.getElementById('searchbox').value||'').toLowerCase();
   const sup=document.getElementById('sup-filter').value;
   const dist=document.getElementById('dist-filter').value;
-  const est=fddState.estado,inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente;
+  const inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente;
   return DATA.filter(r=>{
     if(q&&!(r.cliente+r.contraparte+r.expediente+r.responsable+r.organo+r.especialista+r.bitacora+r.proxTarea).toLowerCase().includes(q))return false;
     if(sup&&r.supervisor!==sup)return false;
@@ -2602,10 +2574,6 @@ function getFiltered(){
     if(mf==='adm'  &&!r.porAdmitir)       return false;
     if(mf==='arch' &&!r.porArchivo)        return false;
     if(mf==='dili'&&!r.proxDiligencia)return false;
-    if(est.has('sensible')&&!r.sensible)return false;
-    if(est.has('ejecucion')&&r.situacion!=='EJECUCION')return false;
-    if(est.has('giro')&&r.situacion!=='EN GIRO')return false;
-    if(est.has('tarea')&&!r.proxTarea)return false;
     if(inst.size>0&&!inst.has(r.instancia))return false;
     if(pact.size>0&&!pact.has(r.pacto))return false;
     if(relv.size>0&&!relv.has(r.relevancia))return false;
@@ -3262,7 +3230,7 @@ function procesarExcel(){
 
     // Reset filtros
     colFilters={};
-    ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+    ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
     if(typeof colFiltersAud!=='undefined')colFiltersAud={};
     if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
     page=1;audPage=1;
@@ -3285,7 +3253,7 @@ function procesarExcel(){
 // de procesar un Excel local o porque se acaban de recibir desde Firestore.
 function finalizarVistaDespuesDeCarga(prefijoLabel){
   colFilters={};
-  ['estado','instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
   if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
