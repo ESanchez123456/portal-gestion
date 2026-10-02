@@ -2064,30 +2064,25 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem;flex-wrap:wrap">
       <div style="font-size:13.5px;font-weight:600">🕒 Control de cambios</div>
       <span style="font-size:11px;color:var(--text4)">quién hizo qué y cuándo, en vivo</span>
-      <div class="srch-wrap" style="max-width:280px;margin-left:auto">
+      <span id="admin-audit-count" style="font-size:11px;color:var(--text4);margin-left:auto"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
+      <select class="sel-inp" id="admin-audit-user" style="max-width:220px" onchange="renderAdminAuditList()">
+        <option value="">Todos los usuarios</option>
+      </select>
+      <div class="tg-date-filter">
+        <span>Fecha:</span>
+        <input type="date" id="admin-audit-desde" onchange="renderAdminAuditList()" title="Desde">
+        <span>—</span>
+        <input type="date" id="admin-audit-hasta" onchange="renderAdminAuditList()" title="Hasta">
+        <button class="btn-sm" onclick="limpiarFechaAdminAudit()" title="Limpiar fechas">✕</button>
+      </div>
+      <div class="srch-wrap" style="max-width:260px;margin-left:auto">
         <span>🔍</span>
-        <input class="srch-inp" type="text" id="admin-audit-search" placeholder="Buscar por usuario, acción..." oninput="renderAdminAuditList()">
+        <input class="srch-inp" type="text" id="admin-audit-search" placeholder="Buscar por usuario, proceso, acción..." oninput="renderAdminAuditList()">
       </div>
     </div>
-    <div id="admin-audit-list" style="max-height:420px;overflow-y:auto;border:1px solid var(--gray-b);border-radius:var(--r)"></div>
-  </div>
-
-  <!-- VACIAR POR CATEGORÍA -->
-  <div style="background:var(--white);border:1px solid var(--gray-b);border-radius:var(--r2);padding:1rem;margin-bottom:1.25rem">
-    <div style="font-size:13.5px;font-weight:600;margin-bottom:.75rem">🗑 Eliminar por categoría</div>
-    <div style="font-size:11px;color:var(--text4);margin-bottom:.75rem">Vacía datos colaborativos para TODO el equipo. No se puede deshacer.</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='fav_procs','Favoritos de procesos')">Favoritos de procesos</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='fav_tareas','Favoritos de tareas')">Favoritos de tareas</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k.indexOf('fav_hist_')===0||k.indexOf('fav_obs_')===0,'Historial / observaciones de favoritos')">Historial de favoritos</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='pp_all','Panel Paralegal')">Panel Paralegal</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='tareasGestion','Tareas de Gestión manuales')">Tareas de Gestión (manuales)</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='tgOverrides','Ediciones de tareas de Gestión')">Ediciones de tareas (Excel)</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k.indexOf('obs_proc_')===0,'Observaciones de procesos')">Observaciones de procesos</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k.indexOf('dili_notas_')===0,'Notas de diligencias')">Notas de diligencias</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k.indexOf('ptarea_')===0,'Adjuntos y notas de tareas')">Adjuntos / notas de tareas</button>
-      <button class="btn" style="font-size:11.5px;color:var(--red);border-color:var(--red-b)" onclick="vaciarGrupoKV(k=>k==='xdata_meta'||k.indexOf('xdata_chunk_')===0,'Datos del Excel publicados para el equipo')">Datos del Excel publicados</button>
-    </div>
+    <div id="admin-audit-list" style="max-height:460px;overflow-y:auto;border:1px solid var(--gray-b);border-radius:var(--r)"></div>
   </div>
 
   <!-- EXPLORADOR DE DATOS (eliminación puntual) -->
@@ -2261,6 +2256,18 @@ function registrarAuditoria(key, accion){
   }
 }
 
+// Registra un "visualizó" en el Control de cambios del Admin — para que quede
+// constancia de quién vio un proceso o una tarea, no solo quién lo editó.
+function registrarVista(texto){
+  if(window.__fbLogAudit){
+    window.__fbLogAudit({key:'vista', accion:'vio', label:texto, byName: window.CURRENT_USER_NAME||''});
+  }
+}
+function logVistaExterna(nroId){
+  const proc = (typeof DATA!=='undefined') ? DATA.find(r=>r.id===nroId) : null;
+  registrarVista('🔗 Vio en MyBiG el proceso #'+nroId+(proc?' — '+(proc.cliente||''):''));
+}
+
 window.CURRENT_USER_EMAIL = '';
 window.CURRENT_USER_NAME  = '';
 
@@ -2342,6 +2349,7 @@ function onKVKeysChanged(keys){
   try{ if(needGestion && typeof renderPlanner==='function') renderPlanner(); }catch(e){}
   try{ if(needFav && typeof renderFavoritos==='function') renderFavoritos(); }catch(e){}
   try{ if(needPP && typeof renderParalegal==='function') renderParalegal(); }catch(e){}
+  try{ if(needPP && typeof renderAdminAuditList==='function') renderAdminAuditList(); }catch(e){}
 }
 
 // Llamado por el script type="module" cuando Firebase detecta sesión iniciada/cerrada.
@@ -2719,7 +2727,7 @@ function render(){
         +'<td class="cb-td" onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" data-id="'+r.id+'" data-tab="rep" '+checked+' onchange="onRowCheck(this,\'rep\')"></td>'
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
-        +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
+        +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'" onclick="logVistaExterna('+r.id+')">'+r.id+'</a></td>'
         +tdT(r.cliente,240,'td-p')+tdT(r.contraparte,200,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
   ? '<td style="max-width:160px"><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
   : tdT(r.bitacora,160,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
@@ -2809,7 +2817,7 @@ function renderAud(){
       +'<td class="cb-td" onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" data-id="'+r.id+'" data-tab="aud" '+checked+' onchange="onRowCheck(this,\'aud\')"></td>'
       +getGestionBadge(r.id)
       +getFavBadge(r.id)
-      +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank">'+r.id+'</a></td>'
+      +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" onclick="logVistaExterna('+r.id+')">'+r.id+'</a></td>'
       +'<td style="max-width:72px;overflow:hidden;text-overflow:ellipsis">'+(r.proxDiliId?'<a class="id-link" href="https://vinatea.mybig.com.ar/tareas/'+r.proxDiliId+'/edit/" target="_blank">#'+r.proxDiliId+'</a>':'<span style="color:var(--text4)">—</span>')+'</td>'
       +tdT(r.cliente,150,'td-p')
       +'<td class="col-ext td-d" title="'+esc(r.contraparte||'')+'">'+esc((r.contraparte||'').slice(0,20)+(r.contraparte&&r.contraparte.length>20?'…':''))+'</td>'
@@ -3364,33 +3372,101 @@ function renderAdmin(){
   renderAdminKeyBrowser();
 }
 
+// Une el log genérico (guardados/eliminados de KV + vistas) con el log
+// detallado de acciones de negocio (Panel Paralegal: comentarios, tareas
+// agendadas, reasignaciones, observaciones...) en una sola lista de eventos
+// legibles para el Control de cambios del Admin.
+function getAdminAuditUnificado(){
+  const rows = [];
+  (window.__ADMIN_AUDIT_ROWS||[]).forEach(r=>{
+    const esVista = r.accion==='vio';
+    const esDel   = r.accion==='delete';
+    rows.push({
+      ts: r.ts||0,
+      icono: esVista?'👁':esDel?'🗑':'✎',
+      accion: esVista?'Visualizó':esDel?'Eliminó':'Guardó',
+      color: esVista?'var(--text3)':esDel?'var(--red)':'var(--blue)',
+      detalle: r.label||r.key||'—',
+      quien: r.byName||r.byEmail||'—'
+    });
+  });
+  let pp=[];
+  try{ pp = JSON.parse(FSLS.getItem('pp_all')||'[]'); }catch(e){}
+  const iconosPP = {obs:'📝',dili:'📅',gestion:'📋',comentario:'💬',aprobacion:'✅'};
+  pp.forEach(e=>{
+    let ts=0;
+    const m = /^pp_(\d+)_/.exec(e.id||'');
+    if(m) ts = Number(m[1]);
+    const ctx = [e.cliente&&e.cliente!=='—'?e.cliente:'', e.expediente&&e.expediente!=='—'?e.expediente:'', e.nroId?'#'+e.nroId:''].filter(Boolean).join(' · ');
+    rows.push({
+      ts, icono: iconosPP[e.tipo]||'📌',
+      accion: 'Acción',
+      color: 'var(--green)',
+      detalle: (ctx?ctx+' — ':'')+(e.texto||''),
+      quien: e.autor||'—'
+    });
+  });
+  rows.sort((a,b)=>b.ts-a.ts);
+  return rows;
+}
+
 function renderAdminAuditList(){
   const wrap = document.getElementById('admin-audit-list');
   if(!wrap) return;
-  const q = (document.getElementById('admin-audit-search')?.value||'').toLowerCase().trim();
-  const rows = (window.__ADMIN_AUDIT_ROWS||[]).filter(r=>{
-    if(!q) return true;
-    return (r.label||'').toLowerCase().includes(q) || (r.byName||'').toLowerCase().includes(q) ||
-           (r.byEmail||'').toLowerCase().includes(q) || (r.key||'').toLowerCase().includes(q);
-  });
+  const q       = (document.getElementById('admin-audit-search')?.value||'').toLowerCase().trim();
+  const usuario = document.getElementById('admin-audit-user')?.value||'';
+  const desde   = document.getElementById('admin-audit-desde')?.value||'';
+  const hasta   = document.getElementById('admin-audit-hasta')?.value||'';
+
+  let rows = getAdminAuditUnificado();
+
+  // Poblar/actualizar el selector de usuarios con quienes aparecen en el log
+  const selUser = document.getElementById('admin-audit-user');
+  if(selUser){
+    const nombres = [...new Set(rows.map(r=>r.quien).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const firma = nombres.join('|');
+    if(selUser.dataset.firma !== firma){
+      const prevVal = selUser.value;
+      selUser.innerHTML = '<option value="">Todos los usuarios</option>'+
+        nombres.map(u=>'<option value="'+esc(u)+'">'+esc(u)+'</option>').join('');
+      selUser.value = prevVal;
+      selUser.dataset.firma = firma;
+    }
+  }
+
+  if(usuario) rows = rows.filter(r=>r.quien===usuario);
+  if(desde){ const dIni=new Date(desde+'T00:00:00').getTime(); rows = rows.filter(r=>r.ts>=dIni); }
+  if(hasta){ const dFin=new Date(hasta+'T23:59:59').getTime(); rows = rows.filter(r=>r.ts<=dFin); }
+  if(q){
+    rows = rows.filter(r=>(r.detalle||'').toLowerCase().includes(q) || (r.quien||'').toLowerCase().includes(q) || (r.accion||'').toLowerCase().includes(q));
+  }
+
+  const cnt = document.getElementById('admin-audit-count');
+  if(cnt) cnt.textContent = rows.length.toLocaleString()+' evento'+(rows.length!==1?'s':'');
+
   if(!rows.length){
-    wrap.innerHTML = '<div style="padding:1rem;color:var(--text4);font-size:12px">Sin cambios registrados todavía.</div>';
+    wrap.innerHTML = '<div style="padding:1rem;color:var(--text4);font-size:12px">Sin cambios registrados para este filtro.</div>';
     return;
   }
-  wrap.innerHTML = rows.slice(0,300).map(r=>{
-    const fecha = r.ts ? new Date(r.ts).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    const esDel = r.accion==='delete';
-    const accionTxt = esDel ? '🗑 Eliminó' : '✎ Guardó';
-    const accionColor = esDel ? 'var(--red)' : 'var(--blue)';
-    const quien = (r.byName||r.byEmail||'—').toString().replace(/</g,'&lt;');
-    const label = (r.label||r.key||'—').toString().replace(/</g,'&lt;');
+  wrap.innerHTML = rows.slice(0,400).map(r=>{
+    const fecha   = r.ts ? new Date(r.ts).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+    const detalle = (r.detalle||'—').toString().replace(/</g,'&lt;');
+    const quien   = (r.quien||'—').toString().replace(/</g,'&lt;');
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--gray-b);font-size:12px">'+
-      '<span style="color:'+accionColor+';font-weight:600;min-width:78px;flex-shrink:0">'+accionTxt+'</span>'+
-      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+label+'</span>'+
-      '<span style="color:var(--text3);min-width:140px;flex-shrink:0;text-align:right">'+quien+'</span>'+
-      '<span style="color:var(--text4);min-width:130px;flex-shrink:0;text-align:right">'+fecha+'</span>'+
+      '<span style="min-width:20px;flex-shrink:0;text-align:center">'+r.icono+'</span>'+
+      '<span style="color:'+r.color+';font-weight:600;min-width:72px;flex-shrink:0">'+r.accion+'</span>'+
+      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+detalle+'">'+detalle+'</span>'+
+      '<span style="color:var(--text3);min-width:140px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+quien+'</span>'+
+      '<span style="color:var(--text4);min-width:150px;flex-shrink:0;text-align:right">'+fecha+'</span>'+
       '</div>';
   }).join('');
+}
+
+function limpiarFechaAdminAudit(){
+  const d=document.getElementById('admin-audit-desde');
+  const h=document.getElementById('admin-audit-hasta');
+  if(d)d.value=''; if(h)h.value='';
+  renderAdminAuditList();
 }
 
 function renderAdminKeyBrowser(){
@@ -5647,6 +5723,7 @@ function abrirComentariosTarea(id){
   comentarioTareaId = id;
   const t = getAllTareasGestion().find(x=>x.id===id);
   document.getElementById('com-tarea-info').textContent = t ? (t.tipo||'—')+' — '+(t.cliente||'').slice(0,40) : '#'+id;
+  registrarVista('💬 Vio comentarios de tarea '+(t?(t.tipo||'').replace('Gestión - ','')+' — '+(t.cliente||''):'#'+id));
   document.getElementById('com-nuevo').value='';
   document.getElementById('com-cnt').textContent='0/250';
   renderComentariosTarea();
@@ -6334,8 +6411,10 @@ function abrirModalAgendar(id){
       info.innerHTML = '<strong>#'+id+' — '+esc(proc.cliente)+'</strong>'
         +'<span style="color:var(--text3)">'+esc(proc.expediente)+'</span>'
         +(proc.instancia?'<span class="badge b-n" style="margin-left:6px;font-size:10px">'+esc(proc.instancia)+'</span>':'');
+      registrarVista('👁 Vio el proceso #'+id+' — '+(proc.cliente||''));
     } else {
       info.innerHTML = '<strong>#'+id+'</strong>';
+      registrarVista('👁 Vio el proceso #'+id);
     }
   } else {
     // Abierto desde toolbar (sin proceso preseleccionado)
