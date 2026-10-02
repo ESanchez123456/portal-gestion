@@ -1037,8 +1037,8 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th class="td-gestion-ind" title="Tareas de Gestión">⚡</th>
           <th style="width:28px;min-width:28px;padding:0 4px;text-align:center" title="Favorito">⭐</th>
           <th style="width:58px;min-width:58px;max-width:58px" data-col="id">ID</th>
-          <th style="width:190px;min-width:190px;max-width:190px" data-col="cliente">Cliente</th>
-          <th style="width:160px;min-width:160px;max-width:160px" data-col="contraparte">Contraparte</th>
+          <th style="width:240px;min-width:240px;max-width:240px" data-col="cliente">Cliente</th>
+          <th style="width:200px;min-width:200px;max-width:200px" data-col="contraparte">Contraparte</th>
           <th style="min-width:130px" data-col="expediente">Expediente</th>
           <th style="min-width:95px"  data-col="supervisor">Supervisor</th>
           <th style="min-width:105px" data-col="responsable">Responsable</th>
@@ -2728,7 +2728,7 @@ function render(){
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
         +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
-        +tdT(r.cliente,190,'td-p')+tdT(r.contraparte,160,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
+        +tdT(r.cliente,240,'td-p')+tdT(r.contraparte,200,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
   ? '<td style="max-width:160px"><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
   : tdT(r.bitacora,160,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
         +'<td style="text-align:center">'+diasSinDili+'</td>'
