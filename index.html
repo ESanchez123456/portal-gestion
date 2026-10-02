@@ -1021,6 +1021,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th style="min-width:140px" data-col="contraparte">Contraparte</th>
           <th style="min-width:130px" data-col="expediente">Expediente</th>
           <th style="min-width:95px"  data-col="supervisor">Supervisor</th>
+          <th style="min-width:105px" data-col="responsable">Responsable</th>
           <th style="min-width:130px" data-col="especialista">Especialista legal</th>
           <th style="min-width:185px" data-col="organo">Órgano jurisdiccional</th>
           <th style="min-width:200px" data-col="bitacora">Bitácora</th>
@@ -1038,6 +1039,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="contraparte" placeholder="Filtrar..." readonly onclick="openCvd(this,'contraparte')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-contraparte"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="expediente" placeholder="Filtrar..." readonly onclick="openCvd(this,'expediente')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-expediente"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="supervisor" placeholder="Filtrar..." readonly onclick="openCvd(this,'supervisor')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-supervisor"></div></div></th>
+          <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="responsable" placeholder="Filtrar..." readonly onclick="openCvd(this,'responsable')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-responsable"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="especialista" placeholder="Filtrar..." readonly onclick="openCvd(this,'especialista')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-especialista"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="organo" placeholder="Filtrar..." readonly onclick="openCvd(this,'organo')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-organo"></div></div></th>
           <th><div class="col-filter-wrap"><input class="col-filter-inp" data-col="bitacora" placeholder="Filtrar..." readonly onclick="openCvd(this,'bitacora')" oninput="onColFilter(this)"><div class="col-val-dropdown" id="cvd-bitacora"></div></div></th>
@@ -2631,7 +2633,7 @@ function render(){
   const slice=rows.slice((page-1)*PAGE,page*PAGE);
   const body=document.getElementById('tbody');
   if(!slice.length){
-    body.innerHTML='<tr><td colspan="16"><div class="empty"><span>—</span>Sin resultados</div></td></tr>';
+    body.innerHTML='<tr><td colspan="17"><div class="empty"><span>—</span>Sin resultados</div></td></tr>';
   }else{
     body.innerHTML=slice.map(r=>{
       const sc=r.sensible?'class="row-s"':r.alertLectura?'class="row-alert"':'';
@@ -2653,7 +2655,7 @@ function render(){
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
         +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'">'+r.id+'</a></td>'
-        +tdT(r.cliente,160,'td-p')+tdT(r.contraparte,140,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
+        +tdT(r.cliente,160,'td-p')+tdT(r.contraparte,140,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
   ? '<td><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
   : tdT(r.bitacora,200,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
         +'<td style="text-align:center">'+diasSinDili+'</td>'
