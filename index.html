@@ -5349,6 +5349,16 @@ function toggleFavTarea(id, cliente, tipo){
     showToast('⭐ Tarea quitada de favoritos');
     return;
   }
+  // Si quien hace clic es uno de los 5 del equipo de Gestión, se marca como
+  // favorito de inmediato para él/ella — sin preguntar a quién se asigna.
+  const nombreActualTar = window.CURRENT_USER_NAME || '';
+  if(typeof GESTION_FAV_USERS!=='undefined' && GESTION_FAV_USERS.includes(nombreActualTar)){
+    favs[id] = { id, cliente: cliente||'', tipo: tipo||'', usuarios:[nombreActualTar], ts: Date.now() };
+    saveFavTareas(favs);
+    updateFavBadge(); renderGestion(); renderFavoritos();
+    showToast('⭐ Tarea agregada a tus favoritos');
+    return;
+  }
   // Nueva → preguntar a quién(es) se le asigna este favorito (Roberto, Carlos, etc.)
   favModalMode = 'tarea';
   favPendingId = id;
@@ -5793,7 +5803,19 @@ function toggleFav(id){
     showToast('⭐ Quitado de favoritos');
     return;
   }
-  // Como toggleFav se llama desde la estrella solo cuando NO está activo, aquí siempre es nuevo
+  // Si quien hace clic es uno de los 5 del equipo de Gestión, se marca como
+  // favorito de inmediato para él/ella — sin preguntar a quién se asigna.
+  const nombreActual = window.CURRENT_USER_NAME || '';
+  if(GESTION_FAV_USERS.includes(nombreActual)){
+    favs[key] = { id, usuarios:[nombreActual], ts: Date.now(), obs:'' };
+    saveFavs(favs);
+    updateFavBadge();
+    render(); renderAud();
+    showToast('⭐ Agregado a tus favoritos');
+    return;
+  }
+  // Para el resto (Paralegal, etc.) sí se pregunta a quién se asigna, porque
+  // quien marca no es necesariamente quien debe atenderlo.
   favModalMode = 'proc';
   favPendingId = id;
   favSelectedUsers = [];
@@ -5806,6 +5828,9 @@ function toggleFav(id){
   document.getElementById('modalFavUser').classList.add('show');
   preseleccionarUsuarioFavActual();
 }
+
+// Los 5 integrantes del equipo de Gestión que pueden recibir favoritos asignados.
+const GESTION_FAV_USERS = ['Roberto Matallana','Carlos Morales','Arturo Trelles','Silvia Maldonado','Juan Jose Edquen'];
 
 // Si quien tiene la sesión iniciada es uno de los 5 del equipo de Gestión, se le
 // preselecciona automáticamente en el modal de "¿A quién se asigna?" (puede
