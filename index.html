@@ -5360,6 +5360,7 @@ function toggleFavTarea(id, cliente, tipo){
   const btn = document.getElementById('fav-modal-confirm');
   if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
   document.getElementById('modalFavUser').classList.add('show');
+  preseleccionarUsuarioFavActual();
 }
 
 // ── SENTENCIAS DEL PROCESO ────────────────────────────────────
@@ -5802,6 +5803,17 @@ function toggleFav(id){
   const btn = document.getElementById('fav-modal-confirm');
   if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
   document.getElementById('modalFavUser').classList.add('show');
+  preseleccionarUsuarioFavActual();
+}
+
+// Si quien tiene la sesión iniciada es uno de los 5 del equipo de Gestión, se le
+// preselecciona automáticamente en el modal de "¿A quién se asigna?" (puede
+// agregar más personas o quitarse él mismo si hace falta).
+function preseleccionarUsuarioFavActual(){
+  const nombre = window.CURRENT_USER_NAME || '';
+  if(!nombre) return;
+  const btn = Array.from(document.querySelectorAll('.fav-user-btn')).find(b=>b.dataset.user===nombre);
+  if(btn) selFavUser(btn);
 }
 
 function selFavUser(el){
