@@ -3089,6 +3089,18 @@ function procesarExcel(){
       return ec===''||ec==='activo';
     });
 
+    // Mapa diagnóstico: para CUALQUIER proceso del último Excel (esté o no
+    // "activo"), guarda el valor crudo de Estado Carpeta que trae esa fila.
+    // Así, si un favorito aparece como "ya no activo", podemos decir la razón
+    // exacta (no está en el Excel vs. su Estado Carpeta no es vacío/Activo)
+    // en vez de un mensaje genérico.
+    window.__RAWRT_ESTADO_BY_ID = {};
+    rawRT.forEach(r=>{
+      const _id = Number(gc(r,['Nro'],['Nro. ID'])||0);
+      if(!_id) return;
+      window.__RAWRT_ESTADO_BY_ID[_id] = gc(r,['estadocarpeta'],['Estado carpeta','Estado Carpeta']) || '(vacío)';
+    });
+
     // Tareas pendientes para cruzar con procesos
     const taPend=rawTA.filter(r=>cl(r['estadotarea']||'').toLowerCase()==='pendiente');
 
@@ -6233,6 +6245,19 @@ function campoProxDilig(proc){
   return {l:'Próx.dilig.', v: proc.proxDiligencia+' · '+proc.proxDiliFecha, style: color?('color:'+color+';font-weight:700'):''};
 }
 
+function motivoFavInactivo(id, etiquetaItem){
+  const mapa = window.__RAWRT_ESTADO_BY_ID || {};
+  let motivo;
+  if(!(id in mapa)){
+    motivo = 'no está en el último Excel cargado';
+  }else{
+    const ec = mapa[id];
+    motivo = (ec==='(vacío)')
+      ? 'su Estado Carpeta está vacío pero igual no aparece activo (revisar con sistemas)'
+      : 'su Estado Carpeta en el Excel es "'+esc(ec)+'" (no "Activo")';
+  }
+  return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ '+etiquetaItem+' ya no está activo en el Reporte Total: '+motivo+' — sus datos no se pueden mostrar, pero el favorito y sus comentarios se conservan.</div>';
+}
 function renderFavoritos(){
   const favs    = getFavs();
   const favTar  = getFavTareas();
@@ -6279,7 +6304,7 @@ function renderFavoritos(){
           :'<div style="font-size:11px;color:var(--text4);margin-bottom:.4rem">Sin comentarios.</div>';
         const asignadosProc = getFavUsuarios(f);
         const asignadosHtml = asignadosProc.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosProc.map(u=>esc(u)).join(', ')+'</div>':'';
-        const inactivoHtml = !proc?'<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ Este proceso ya no está activo en el Reporte Total (pasó a "De baja" o no está en el último Excel cargado) — sus datos no se pueden mostrar, pero el favorito y sus comentarios se conservan.</div>':'';
+        const inactivoHtml = !proc?motivoFavInactivo(f.id,'Este proceso'):'';
         return '<div class="fav-card">'
           +'<div class="fav-card-header"><span class="fav-star activo" onclick="toggleFav('+f.id+')" style="flex-shrink:0">⭐</span>'
           +'<div style="flex:1"><div class="fav-card-title">'+esc(proc?proc.cliente:'#'+f.id)+'</div>'
@@ -6338,7 +6363,7 @@ function renderFavoritos(){
       const asignadosTarHtml = asignadosTar.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosTar.map(u=>esc(u)).join(', ')+'</div>':'';
       const inactivoTarHtml = !tarea
         ? '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ Esta tarea ya no existe en Tareas de Gestión (fue eliminada o ya no está en el último Excel) — el favorito y sus comentarios se conservan.</div>'
-        : (!proc ? '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ El proceso de esta tarea ya no está activo en el Reporte Total — sus datos no se pueden mostrar, pero el favorito y sus comentarios se conservan.</div>' : '');
+        : (!proc ? motivoFavInactivo(tarea.nroId,'El proceso de esta tarea') : '');
 
       return '<div class="fav-card" style="border-left-color:var(--green)">'
         +'<div class="fav-card-header"><span class="tg-fav-star activo" data-fid="'+esc(f.id)+'" onclick="toggleFavTarea(this.dataset.fid)" style="font-size:14px;flex-shrink:0">⭐</span>'
