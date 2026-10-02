@@ -3256,8 +3256,12 @@ function procesarExcel(){
       const bit=gc(r,['bitacora'],['Bitácora','Bitacora']);
       const _bu=bit.toUpperCase();
       const _pL=_bu.includes('PENDIENTE')&&_bu.includes('LECTURA')&&_bu.includes('SENTENCIA');
-      const _tL=_pt.toUpperCase().includes('LECTURA')&&_pt.toUpperCase().includes('SENTENCIA');
-      const _aL=_pL&&!!_pt&&!_tL;
+      const _pNS=_bu.includes('PENDIENTE DE EMITIR NUEVA SENTENCIA');
+      // Inconsistencia real: la bitácora dice que el proceso está pendiente de
+      // sentencia (lectura o nueva sentencia) pero igual hay una PRÓXIMA
+      // DILIGENCIA/AUDIENCIA programada (dT ya excluye la propia audiencia de
+      // lectura de sentencia, así que si dT existe es otro tipo de diligencia).
+      const _aL=(_pL||_pNS)&&!!dT;
 
       return{
         id,
