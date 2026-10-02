@@ -6170,6 +6170,26 @@ function updateFavBadge(){
   if(el) el.textContent = cnt;
 }
 
+// Color de alerta para la próxima diligencia en los favoritos, según cercanía:
+// el mismo día → rojo, 3 días antes → ámbar, 2 o 1 días antes → verde.
+function colorDiligCountdown(fechaStr){
+  if(!fechaStr) return null;
+  const [d,m,y] = fechaStr.split('/');
+  if(!d||!m||!y) return null;
+  const f = new Date(+y,+m-1,+d); f.setHours(0,0,0,0);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dias = Math.round((f-hoy)/(1000*60*60*24));
+  if(dias===0) return 'var(--red)';
+  if(dias===3) return 'var(--amber)';
+  if(dias===2||dias===1) return 'var(--green)';
+  return null;
+}
+function campoProxDilig(proc){
+  if(!proc || !proc.proxDiligencia) return {l:'Próx.dilig.', v:'—'};
+  const color = colorDiligCountdown(proc.proxDiliFecha);
+  return {l:'Próx.dilig.', v: proc.proxDiligencia+' · '+proc.proxDiliFecha, style: color?('color:'+color+';font-weight:700'):''};
+}
+
 function renderFavoritos(){
   const favs    = getFavs();
   const favTar  = getFavTareas();
@@ -6204,11 +6224,11 @@ function renderFavoritos(){
           {l:'Supervisor',v:proc.supervisor},{l:'Responsable',v:proc.responsable},
           {l:'Instancia',v:proc.instancia},{l:'Situación',v:proc.situacion},
           {l:'Pacto',v:proc.pacto},{l:'Relevancia',v:proc.relevancia},
-          {l:'Distrito',v:proc.distrito},{l:'Próx.dilig.',v:proc.proxDiligencia?(proc.proxDiligencia+' · '+proc.proxDiliFecha):'—'},
+          {l:'Distrito',v:proc.distrito},campoProxDilig(proc),
           {l:'Bitácora',v:proc.bitacora||'—'},{l:'Órgano',v:proc.organo||'—'},
           {l:'Cuantía',v:proc.cuantia?('S/ '+fmtMonto(proc.cuantia)):'—'},{l:'Reposición',v:proc.reposicion||'—'},
         ]:[];
-        const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
+        const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span'+(c.style?' style="'+c.style+'"':'')+'>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
         const sentsF = haySentenciasDisponibles() ? getSentencias(f.id) : [];
         const sentHtml = sentsF.length ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(f.id)+'</div>' : '';
         const histHtml = hist.length
@@ -6259,11 +6279,11 @@ function renderFavoritos(){
         {l:'Supervisor',v:proc.supervisor},{l:'Responsable',v:proc.responsable},
         {l:'Instancia',v:proc.instancia},{l:'Situación',v:proc.situacion},
         {l:'Pacto',v:proc.pacto},{l:'Relevancia',v:proc.relevancia},
-        {l:'Distrito',v:proc.distrito},{l:'Próx.dilig.',v:proc.proxDiligencia?(proc.proxDiligencia+' · '+proc.proxDiliFecha):'—'},
+        {l:'Distrito',v:proc.distrito},campoProxDilig(proc),
         {l:'Bitácora',v:proc.bitacora||'—'},{l:'Órgano',v:proc.organo||'—'},
         {l:'Cuantía',v:proc.cuantia?('S/ '+fmtMonto(proc.cuantia)):'—'},{l:'Reposición',v:proc.reposicion||'—'},
       ]:[];
-      const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
+      const gridHtml = campos.length?'<div class="fav-card-grid">'+campos.map(c=>'<div class="fav-card-field"><label>'+esc(c.l)+'</label><span'+(c.style?' style="'+c.style+'"':'')+'>'+esc((c.v||'—').slice(0,45))+'</span></div>').join('')+'</div>':'';
       const sentsTar = (proc && haySentenciasDisponibles()) ? getSentencias(proc.id) : [];
       const sentHtml = sentsTar.length ? '<div style="margin-bottom:.5rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">⚖ Sentencias previas</div>'+renderSentencias(proc.id)+'</div>' : '';
 
