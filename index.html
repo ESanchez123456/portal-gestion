@@ -902,6 +902,20 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
       </div>
     </div>
 
+    <!-- BITÁCORA (filtro múltiple) -->
+    <div class="fdd" id="fdd-bitacora">
+      <div class="fdd-btn" onclick="toggleFdd('fdd-bitacora')">
+        Bitácora
+        <span class="fdd-cnt" id="cnt-bitacora"></span>
+        <span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()" style="min-width:260px">
+        <input type="text" class="fdd-search" placeholder="Buscar bitácora..." oninput="filtrarFddBitacora(this.value)">
+        <div id="fdd-bitacora-items" class="fdd-panel-scroll"></div>
+        <span class="fdd-clear" onclick="clearGroup('bitacora')">Limpiar</span>
+      </div>
+    </div>
+
     <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
 
     <!-- INSTANCIA -->
@@ -2429,7 +2443,7 @@ const TAB_STATE = {
 };
 // Aliases para compatibilidad con código existente (apuntan al tab activo)
 let mf='', colFilters={};
-let fddState={instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set()};
+let fddState={instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set(),bitacora:new Set()};
 let page=1,audPage=1,sensPage=1,audSortAsc=true;
 let activeTab='reporte';
 
@@ -2527,7 +2541,7 @@ function clearGroup(group){
 }
 
 function updateFddCounts(){
-  ['instancia','pacto','relevancia','cliente'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>{
     const n=fddState[g].size;
     const cnt=document.getElementById('cnt-'+g);
     cnt.textContent=n;
@@ -2547,7 +2561,7 @@ function updateActiveChips(){
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
     'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
   };
-  ['instancia','pacto','relevancia','cliente'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>{
     fddState[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}
         <button onclick="removeFddItem('${g}','${k}')">×</button></div>`);
@@ -2592,7 +2606,7 @@ function clearColFilters(){
   page=1;render();updateActiveChips();
 }
 function resetAllFilters(){
-  ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
   clearColFilters();
   document.getElementById('searchbox').value='';
   document.getElementById('sup-filter').value='';
@@ -2607,7 +2621,7 @@ function getFiltered(){
   const q=(document.getElementById('searchbox').value||'').toLowerCase();
   const sup=document.getElementById('sup-filter').value;
   const dist=document.getElementById('dist-filter').value;
-  const inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente;
+  const inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente,bitSet=fddState.bitacora;
   return DATA.filter(r=>{
     if(q&&!(r.cliente+r.contraparte+r.expediente+r.responsable+r.organo+r.especialista+r.bitacora+r.proxTarea).toLowerCase().includes(q))return false;
     if(sup&&r.supervisor!==sup)return false;
@@ -2620,6 +2634,7 @@ function getFiltered(){
     if(pact.size>0&&!pact.has(r.pacto))return false;
     if(relv.size>0&&!relv.has(r.relevancia))return false;
     if(clienteSet.size>0&&!clienteSet.has(r.cliente))return false;
+    if(bitSet.size>0&&!bitSet.has(r.bitacora))return false;
     for(const[col,val]of Object.entries(colFilters)){
       if(!String(r[col]||'').toLowerCase().includes(val))return false;
     }
@@ -2646,6 +2661,7 @@ function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+
   poblarFddRelevancia();
   poblarFddCliente();
   poblarFddClienteAud();
+  poblarFddBitacora();
 })();
 
 // Poblar filtro múltiple de Relevancia (valores dinámicos, según lo que traiga el Excel)
@@ -2676,6 +2692,25 @@ function poblarFddCliente(){
 function filtrarFddCliente(q){
   const needle=(q||'').toLowerCase();
   document.querySelectorAll('#fdd-cliente-items .fdd-item').forEach(it=>{
+    it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
+  });
+}
+
+// Poblar filtro múltiple de Bitácora (Reporte Total) — con buscador interno por el volumen de valores
+function poblarFddBitacora(){
+  const cont=document.getElementById('fdd-bitacora-items');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.bitacora).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group="bitacora" data-key="'+esc(v)+'" data-search="'+esc(v.toLowerCase())+'" onclick="toggleFddItem(this)" title="'+esc(v)+'" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span>'+esc(v.length>50?v.slice(0,50)+'…':v)+'</span>'
+    +'</div>'
+  )).join('');
+}
+function filtrarFddBitacora(q){
+  const needle=(q||'').toLowerCase();
+  document.querySelectorAll('#fdd-bitacora-items .fdd-item').forEach(it=>{
     it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
   });
 }
@@ -3257,6 +3292,8 @@ function procesarExcel(){
       const _bu=bit.toUpperCase();
       const _pL=_bu.includes('PENDIENTE')&&_bu.includes('LECTURA')&&_bu.includes('SENTENCIA');
       const _pNS=_bu.includes('PENDIENTE DE EMITIR NUEVA SENTENCIA');
+      // "CASACI" cubre CASACION y CASACIÓN (con/sin tilde) en un solo includes.
+      const _pCas=_bu.includes('PENDIENTE')&&_bu.includes('CASACI');
       // Caso 1: la bitácora dice que el proceso está pendiente de sentencia
       // (lectura o nueva sentencia) pero igual hay una PRÓXIMA DILIGENCIA/
       // AUDIENCIA programada (dT ya excluye la propia audiencia de lectura de
@@ -3292,7 +3329,7 @@ function procesarExcel(){
         reposicion: gc(r,['reposicion'],['Reposición','Reposicion','REPOSICION','Repone','Reposición SI/NO','Reposicion SI/NO']),
         estadoCarpeta:gc(r,['estadocarpeta'],['Estado carpeta','Estado Carpeta']),
         sensible:   gc(r,['relevancia'],['Relevancia'])==='SENSIBLE',
-        porSentenciar:_pL,
+        porSentenciar:_pL||_pCas,
         alertLectura:_aL,
         porNuevaSentencia: bit.toUpperCase().includes('PENDIENTE DE EMITIR NUEVA SENTENCIA'),
         porAdmitir:        bit.toUpperCase().includes('PENDIENTE DE ADMITIR DEMANDA'),
@@ -3312,7 +3349,7 @@ function procesarExcel(){
 
     // Reset filtros
     colFilters={};
-    ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+    ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
     if(typeof colFiltersAud!=='undefined')colFiltersAud={};
     if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
     page=1;audPage=1;
@@ -3335,7 +3372,7 @@ function procesarExcel(){
 // de procesar un Excel local o porque se acaban de recibir desde Firestore.
 function finalizarVistaDespuesDeCarga(prefijoLabel){
   colFilters={};
-  ['instancia','pacto','relevancia','cliente'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
   if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
@@ -3357,6 +3394,7 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
   }
   if(typeof poblarFddRelevancia==='function')poblarFddRelevancia();
   if(typeof poblarFddCliente==='function')poblarFddCliente();
+  if(typeof poblarFddBitacora==='function')poblarFddBitacora();
   if(typeof poblarFddClienteAud==='function')poblarFddClienteAud();
   rebuildTipos();
   const lbl = document.getElementById('lbl-sem');
