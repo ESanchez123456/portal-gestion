@@ -3260,8 +3260,10 @@ function procesarExcel(){
       // Inconsistencia real: la bitácora dice que el proceso está pendiente de
       // sentencia (lectura o nueva sentencia) pero igual hay una PRÓXIMA
       // DILIGENCIA/AUDIENCIA programada (dT ya excluye la propia audiencia de
-      // lectura de sentencia, así que si dT existe es otro tipo de diligencia).
-      const _aL=(_pL||_pNS)&&!!dT;
+      // lectura de sentencia, así que si dT existe es otro tipo de diligencia),
+      // y esa diligencia debe estar PENDIENTE (si está Cancelada/Cumplida no
+      // hay contradicción real).
+      const _aL=(_pL||_pNS)&&!!dT&&!!(td&&td._esPend);
 
       return{
         id,
