@@ -3893,9 +3893,12 @@ function startPortal(){
   setTimeout(initAllMentions, 300);
   render();
 }
-(function(){
-  startPortal();
-})();
+// Se difiere con setTimeout (en vez de llamar directo) para que el resto del
+// script — todas las declaraciones let/const que vienen más abajo en el
+// archivo — ya se hayan terminado de ejecutar antes de que startPortal()
+// llame a render(). Llamarlo directo aquí causaba un ReferenceError de
+// inicialización que cortaba el resto del script a la mitad.
+setTimeout(startPortal, 0);
 
 
 
