@@ -3257,13 +3257,18 @@ function procesarExcel(){
       const _bu=bit.toUpperCase();
       const _pL=_bu.includes('PENDIENTE')&&_bu.includes('LECTURA')&&_bu.includes('SENTENCIA');
       const _pNS=_bu.includes('PENDIENTE DE EMITIR NUEVA SENTENCIA');
-      // Inconsistencia real: la bitácora dice que el proceso está pendiente de
-      // sentencia (lectura o nueva sentencia) pero igual hay una PRÓXIMA
-      // DILIGENCIA/AUDIENCIA programada (dT ya excluye la propia audiencia de
-      // lectura de sentencia, así que si dT existe es otro tipo de diligencia),
-      // y esa diligencia debe estar PENDIENTE (si está Cancelada/Cumplida no
-      // hay contradicción real).
-      const _aL=(_pL||_pNS)&&!!dT&&!!(td&&td._esPend);
+      // Caso 1: la bitácora dice que el proceso está pendiente de sentencia
+      // (lectura o nueva sentencia) pero igual hay una PRÓXIMA DILIGENCIA/
+      // AUDIENCIA programada (dT ya excluye la propia audiencia de lectura de
+      // sentencia, así que si dT existe es otro tipo de diligencia), y esa
+      // diligencia debe estar PENDIENTE (si está Cancelada/Cumplida no hay
+      // contradicción real).
+      const _aLSentSinCoincidir=(_pL||_pNS)&&!!dT&&!!(td&&td._esPend);
+      // Caso 2 (inverso): la bitácora dice que el proceso está pendiente de
+      // alguna audiencia, pero en Próxima Audiencia no hay nada agendado —
+      // es decir, falta registrar/programar esa audiencia en el sistema.
+      const _pAudSinAgendar=_bu.includes('PENDIENTE')&&_bu.includes('AUDIENCIA')&&!dT;
+      const _aL=_aLSentSinCoincidir||_pAudSinAgendar;
 
       return{
         id,
