@@ -1057,6 +1057,30 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
 <!-- TAB AUDIENCIAS -->
 <div id="tab-audiencias" class="tab-content">
+
+  <div class="stats">
+    <div class="stat">
+      <div><div class="stat-val" id="aud-st-total">—</div><div class="stat-lbl">Con audiencia</div></div>
+      <div class="stat-icon" style="background:#f1f5f9;color:#64748b"><span>📅</span></div>
+    </div>
+    <div class="stat">
+      <div><div class="stat-val" id="aud-st-hoy" style="color:var(--green)">—</div><div class="stat-lbl">Hoy</div></div>
+      <div class="stat-icon" style="background:var(--green-l);color:var(--green)"><span>✅</span></div>
+    </div>
+    <div class="stat">
+      <div><div class="stat-val" id="aud-st-semana" style="color:var(--amber)">—</div><div class="stat-lbl">Esta semana</div></div>
+      <div class="stat-icon" style="background:var(--amber-l);color:var(--amber)"><span>🗓</span></div>
+    </div>
+    <div class="stat">
+      <div><div class="stat-val" id="aud-st-vencidas" style="color:var(--red)">—</div><div class="stat-lbl">Atrasadas</div></div>
+      <div class="stat-icon" style="background:var(--red-l);color:var(--red)"><span>⏰</span></div>
+    </div>
+    <div class="stat">
+      <div><div class="stat-val" id="aud-st-sens" style="color:var(--red)">—</div><div class="stat-lbl">Sensibles</div></div>
+      <div class="stat-icon" style="background:var(--red-l);color:var(--red)"><span>⚠</span></div>
+    </div>
+  </div>
+
   <div class="search-row">
     <div class="srch-wrap"><span>🔍</span>
       <input class="srch-inp" type="text" id="aud-search" placeholder="Buscar cliente, expediente, responsable, órgano..." oninput="renderAud()">
@@ -2808,6 +2832,7 @@ function renderAud(){
   _filteredAud = rows;
   document.getElementById('aud-count').textContent=total.toLocaleString()+' audiencia'+(total!==1?'s':'');
   buildPag('aud-pg-info','aud-pg-btns',audPage,tp,p=>{audPage=p;renderAud();});
+  updateStatsAud();
   updateBulkBar('aud');
   setTimeout(addResizeHandles, 0);
 }
@@ -2885,6 +2910,34 @@ function updateStats(){
   document.getElementById('mfb-s-cnt').textContent    = porSentTotal.toLocaleString();
   document.getElementById('mfb-adm-cnt').textContent  = DATA.filter(r=>r.porAdmitir).length.toLocaleString();
   document.getElementById('mfb-arch-cnt').textContent = DATA.filter(r=>r.porArchivo).length.toLocaleString();
+}
+
+function updateStatsAud(){
+  const elTotal=document.getElementById('aud-st-total');
+  if(!elTotal)return; // tab aún no renderizada
+  const parseAudF = f=>{
+    if(!f)return null;
+    const [d,m,y]=f.split('/');
+    if(!d||!m||!y)return null;
+    return new Date(+y,+m-1,+d);
+  };
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const finSemana=new Date(hoy); finSemana.setDate(finSemana.getDate()+6);
+  const conDili = DATA.filter(r=>r.proxDiligencia);
+  let nHoy=0,nSemana=0,nVencidas=0,nSens=0;
+  conDili.forEach(r=>{
+    const ft=parseAudF(r.proxDiliFecha);
+    if(r.sensible)nSens++;
+    if(!ft)return;
+    if(ft.getTime()===hoy.getTime())nHoy++;
+    if(ft>=hoy&&ft<=finSemana)nSemana++;
+    if(ft<hoy)nVencidas++;
+  });
+  elTotal.textContent=conDili.length.toLocaleString();
+  document.getElementById('aud-st-hoy').textContent=nHoy.toLocaleString();
+  document.getElementById('aud-st-semana').textContent=nSemana.toLocaleString();
+  document.getElementById('aud-st-vencidas').textContent=nVencidas.toLocaleString();
+  document.getElementById('aud-st-sens').textContent=nSens.toLocaleString();
 }
 
 function buildPag(infoId,btnsId,cur,total,cb){
@@ -3018,7 +3071,7 @@ function procesarExcel(){
         const tipo    = cl(r['tipo']||'').toUpperCase();
         const usuario = cl(r['usuario']||'');
         const alterno = cl(r['asignado_alterno']||'');
-        return tipo.startsWith('DILIGENCIA') && (
+        return tipo.startsWith('DILIGENCIA -') && (
           NOMBRES_GESTION.some(n=>n.toLowerCase()===usuario.toLowerCase()) ||
           NOMBRES_GESTION.some(n=>n.toLowerCase()===alterno.toLowerCase())
         );
@@ -3115,7 +3168,7 @@ function procesarExcel(){
     const taUltDili={};
     rawTA.forEach(r=>{
       const tipo=cl(r['tipo']||'').toUpperCase();
-      if(!tipo.startsWith('DILIGENCIA'))return;
+      if(!tipo.startsWith('DILIGENCIA -'))return;
       const np=Number(r['nroproceso']||0);
       const fd=fmtF(r['fecha']);
       const fdSort=fd?fd.split('/').reverse().join('-'):'';
@@ -3127,7 +3180,7 @@ function procesarExcel(){
       const np=Number(r['nroproceso']||0);
       const tipo=cl(r['tipo']||'').toUpperCase();
       const fd=fmtF(r['fecha']);
-      if(!tipo.startsWith('DILIGENCIA')){
+      if(!tipo.startsWith('DILIGENCIA -')){
         if(!taNoDili[np]||fd<(taNoDili[np]._fd||'zzz'))taNoDili[np]={...r,_fd:fd};
       }
     });
@@ -3137,7 +3190,7 @@ function procesarExcel(){
     const hoyStr=(()=>{const h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');})();
     rawTA.forEach(r=>{
       const tipo=cl(r['tipo']||'').toUpperCase();
-      if(!tipo.startsWith('DILIGENCIA'))return;
+      if(!tipo.startsWith('DILIGENCIA -'))return;
       const np=Number(r['nroproceso']||0);
       const fd=fmtF(r['fecha']);
       const estado=cl(r['estadotarea']||'');
@@ -3257,6 +3310,15 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
   if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
+
+  // Por defecto, Próximas Audiencias solo muestra de hoy en adelante (no las pasadas)
+  const fDesde=document.getElementById('aud-fecha-desde');
+  const fHasta=document.getElementById('aud-fecha-hasta');
+  if(fDesde){
+    const hoy=new Date();
+    fDesde.value=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  }
+  if(fHasta) fHasta.value='';
 
   const sel=document.getElementById('dist-filter');
   if(sel){
@@ -4741,10 +4803,10 @@ function renderPlanner(){
         const reasignada = t._plannerAsig && t._plannerAsig.trim().toLowerCase()!==asigOrig;
         const esOriginal = reasignada && asigOrig===mNorm;
         const tipo  = t.tipo?(t.tipo.replace('DILIGENCIA - ','').replace('Gestión - ','')).slice(0,22):'—';
-        const tipoLabel = t.tipo?(t.tipo.toUpperCase().startsWith('DILIGENCIA')?'Diligencia':t.tipo.startsWith('Gestión')?'Gestión':t.tipo.slice(0,14)):'—';
+        const tipoLabel = t.tipo?(t.tipo.toUpperCase().startsWith('DILIGENCIA -')?'Diligencia':t.tipo.startsWith('Gestión')?'Gestión':t.tipo.slice(0,14)):'—';
         const hora = t.hora?'<span class="planner-card-hora">'+esc(t.hora)+'</span>':'';
         const cls = 'planner-card'+(esOriginal?' original':reasignada?' reasignada':'');
-        const bColor = t.tipo&&t.tipo.toUpperCase().startsWith('DILIGENCIA')?'var(--amber)':t.tipo&&t.tipo.startsWith('Gestión')?'var(--green)':'var(--blue)';
+        const bColor = t.tipo&&t.tipo.toUpperCase().startsWith('DILIGENCIA -')?'var(--amber)':t.tipo&&t.tipo.startsWith('Gestión')?'var(--green)':'var(--blue)';
         const horas = getHorasTarea(t.tipo);
         const horasLabel = horas>=1 ? horas+'h' : Math.round(horas*60)+'min';
         const key = t._key;
@@ -4871,7 +4933,7 @@ function renderEquipos(){
 
   let dilis = rawTA.filter(r=>{
     const tipo = cl(r['tipo']||'').toUpperCase();
-    if(!tipo.startsWith('DILIGENCIA')) return false;
+    if(!tipo.startsWith('DILIGENCIA -')) return false;
     const sup  = cl(r['supervisor']||'');
     const usr  = cl(r['usuario']||'');
     const cli  = cl(r['clientefacturable']||r['clienterepresentado']||'');
