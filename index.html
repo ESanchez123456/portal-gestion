@@ -549,8 +549,13 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .pp-apro-ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
 .pp-apro-rech{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 /* ── PANEL PARALEGAL CARDS ── */
-.pp-card:hover{border-color:#cbd5e1}
-.pp-card.atendida{opacity:.55;background:var(--gray-l)}
+.pp-card{background:var(--white);border:1px solid var(--gray-b);border-left:4px solid var(--gray-b);border-radius:var(--r2);padding:11px 14px;transition:border-color .13s,box-shadow .13s}
+.pp-card:hover{border-color:#cbd5e1;box-shadow:0 2px 10px rgba(15,23,42,.06)}
+.pp-card.pp-urg-alta{border-left-color:var(--amber)}
+.pp-card.pp-urg-media{border-left-color:var(--red)}
+.pp-card.pp-urg-baja{border-left-color:var(--blue)}
+.pp-card.atendida{opacity:.55;background:var(--gray-l);border-left-color:var(--gray-b)}
+.pp-card.atendida:hover{box-shadow:none}
 .pp-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:.6rem;flex-wrap:wrap}
 .pp-card-tipo{padding:2px 9px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
 .pp-tipo-obs{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
@@ -560,10 +565,13 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .pp-card-proc{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .pp-card-cliente{font-weight:600;font-size:12.5px;color:var(--text)}
 .pp-card-exp{font-size:11px;color:var(--text3);font-family:var(--mono)}
-.pp-card-body{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:.65rem;padding:8px 10px;background:var(--gray-l);border-radius:var(--r);border-left:3px solid var(--gray-b)}
+.pp-card-body{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:.5rem;padding:6px 9px;background:var(--gray-l);border-radius:var(--r);border-left:3px solid var(--gray-b)}
 .pp-card-body.obs-cid{border-left-color:var(--blue)}
-.pp-card-meta{font-size:10.5px;color:var(--text4);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:.65rem;align-items:center}
+.pp-card-meta{font-size:10.5px;color:var(--text4);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:.5rem;align-items:center}
 .pp-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pp-toggle-atend{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:var(--r);font-size:11.5px;font-weight:500;font-family:var(--font);cursor:pointer;border:1px solid var(--gray-b);background:var(--white);color:var(--text3);transition:all .13s}
+.pp-toggle-atend:hover{border-color:var(--dark);color:var(--dark)}
+.pp-toggle-atend.on{background:var(--dark);color:#fff;border-color:var(--dark)}
 .pp-btn{padding:5px 12px;border-radius:var(--r);font-size:11.5px;font-family:var(--font);cursor:pointer;font-weight:500;transition:all .13s;border:1px solid}
 .pp-btn-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}.pp-btn-ok:hover{background:#dcfce7}
 .pp-btn-resp{background:var(--white);color:var(--text3);border-color:var(--gray-b)}.pp-btn-resp:hover{border-color:var(--dark);color:var(--dark)}
@@ -1988,8 +1996,8 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
     <div style="font-size:15px;font-weight:700">📋 Panel Paralegal</div>
-    <span id="pp-cnt-todas" class="fdd-cnt show" style="background:var(--dark)">0</span>
-    <span style="font-size:11.5px;color:var(--text4)">— todo lo que Gestión hace, en un solo lugar</span>
+    <span id="pp-cnt-todas" class="fdd-cnt show" style="background:var(--amber)" title="Entradas pendientes de revisar">0</span>
+    <span style="font-size:11.5px;color:var(--text4)">pendientes — todo lo que Gestión hace, en un solo lugar</span>
   </div>
 
   <!-- Toolbar -->
@@ -1998,11 +2006,9 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
       <span>🔍</span>
       <input class="srch-inp" type="text" id="pp-search" placeholder="Buscar cliente, expediente, texto..." oninput="renderParalegal()">
     </div>
-    <select class="sel-inp" id="pp-atendida" onchange="renderParalegal()">
-      <option value="">Todos</option>
-      <option value="0">Pendientes</option>
-      <option value="1">Atendidas</option>
-    </select>
+    <button type="button" class="pp-toggle-atend" id="pp-toggle-atendidas" onclick="togglePPAtendidas()">
+      <span id="pp-toggle-atendidas-ico">👁</span> <span id="pp-toggle-atendidas-txt">Ver atendidas</span>
+    </button>
     <span class="count-lbl" id="pp-count">—</span>
     <div style="margin-left:auto;display:flex;gap:8px">
       <button class="btn" onclick="limpiarAtendidas()" style="font-size:11.5px;color:var(--red);border-color:var(--red-b);background:var(--red-l)">🗑 Limpiar atendidas</button>
@@ -6593,25 +6599,36 @@ function guardarGestionTarea(){
 // ── PANEL PARALEGAL ──────────────────────────────────────────
 const PP_PAGE = 20;
 let ppPage = 1;
+let ppVerAtendidas = false;
 
+function togglePPAtendidas(){
+  ppVerAtendidas = !ppVerAtendidas;
+  const btn = document.getElementById('pp-toggle-atendidas');
+  const ico = document.getElementById('pp-toggle-atendidas-ico');
+  const txt = document.getElementById('pp-toggle-atendidas-txt');
+  if(btn) btn.classList.toggle('on', ppVerAtendidas);
+  if(ico) ico.textContent = ppVerAtendidas ? '🙈' : '👁';
+  if(txt) txt.textContent = ppVerAtendidas ? 'Ocultar atendidas' : 'Ver atendidas';
+  ppPage = 1;
+  renderParalegal();
+}
 
 function getAllParalelEntries(){
   return JSON.parse(FSLS.getItem('pp_all')||'[]');
 }
 
 function renderParalegal(){
-  const q        = (document.getElementById('pp-search').value||'').toLowerCase();
-  const atendFil = document.getElementById('pp-atendida').value;
+  const q = (document.getElementById('pp-search').value||'').toLowerCase();
 
   const all = getAllParalelEntries();
 
+  const pendientesCount = all.filter(e=>!e.atendida).length;
   const cntEl = document.getElementById('pp-cnt-todas');
-  if(cntEl) cntEl.textContent = all.length;
+  if(cntEl) cntEl.textContent = pendientesCount;
 
   let entries = all.filter(e=>{
+    if(!ppVerAtendidas && e.atendida) return false;
     if(q && !(e.cliente+e.expediente+(e.texto||'')).toLowerCase().includes(q)) return false;
-    if(atendFil==='0' && e.atendida) return false;
-    if(atendFil==='1' && !e.atendida) return false;
     return true;
   });
 
@@ -6666,6 +6683,16 @@ function renderParalegal(){
       }
       return null;
     };
+    // Urgencia visual (barra de color a la izquierda de la tarjeta):
+    // alta = requiere una decisión (aprobar/rechazar, agendar) · media = algo se quitó/devolvió, hay que confirmar · baja = informativo, revisar
+    const urgencia = e=>{
+      if(e.tipo==='aprobacion' && e.estado!=='aprobada' && e.estado!=='rechazada') return 'alta';
+      if(e.tipo==='gestion'){
+        const t=e.texto||'';
+        if(t.startsWith('🗑')||t.startsWith('↩')) return 'media';
+      }
+      return 'baja';
+    };
     container.innerHTML = slice.map(e=>{
       const procUrl  = 'https://vinatea.mybig.com.ar/trabajos/overview/'+(e.nroId||0)+'/';
       const tareaUrl = e.nrotarea?'https://vinatea.mybig.com.ar/tareas/'+e.nrotarea+'/edit/':procUrl;
@@ -6673,43 +6700,44 @@ function renderParalegal(){
       const acc      = accionPP(e);
       const tBadge   = '<span class="pp-card-tipo '+acc.cls+'" title="Tipo de acción">'+acc.label+'</span>';
       const accionTxt = e.atendida ? null : queHacer(e);
+      const urg      = e.atendida ? '' : ' pp-urg-'+urgencia(e);
 
       // Texto del movimiento: si trae varios cambios separados por " · ", se listan uno por línea
       const parts = (e.texto||'—').split(' · ').map(p=>p.trim()).filter(Boolean);
       const bodyHtml = parts.length>1
-        ? '<ul style="margin:2px 0 0 18px;padding:0;font-size:12.5px;color:var(--text)">'+parts.map(p=>'<li style="margin-bottom:2px">'+esc(p)+'</li>').join('')+'</ul>'
-        : '<div class="pp-card-body'+(e.tipo==='dili'?' obs-cid':'')+'" style="margin:2px 0 0">'+esc(e.texto||'—')+'</div>';
+        ? '<ul style="margin:2px 0 0 18px;padding:0;font-size:12px;color:var(--text)">'+parts.map(p=>'<li style="margin-bottom:2px">'+esc(p)+'</li>').join('')+'</ul>'
+        : '<div class="pp-card-body'+(e.tipo==='dili'?' obs-cid':'')+'" style="margin:0">'+esc(e.texto||'—')+'</div>';
       const extraHtml = e.extra&&e.extra.tipoAud ? '<div style="font-size:10.5px;color:var(--text4);margin-top:3px">Tipo: '+esc(e.extra.tipoAud)+'</div>' : '';
 
       const tieneCliente = e.cliente && e.cliente!=='—';
 
-      return '<div class="pp-card'+(e.atendida?' atendida':'')+'">'
+      return '<div class="pp-card'+urg+(e.atendida?' atendida':'')+'">'
         // Fila 1: qué tipo de acción es + de qué sección + hora, a la derecha
-        +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">'
           +tBadge+oBadge
           +'<span style="margin-left:auto;font-size:10.5px;color:var(--text4);white-space:nowrap">🕐 '+esc(e.ts||'—')+'</span>'
         +'</div>'
-        // Fila 2: el proceso — cliente, expediente, supervisor y el link directo a MyBiG
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--gray-b)">'
-          +'<div>'
-            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(tieneCliente?esc(e.cliente.slice(0,45)):'<span style="color:var(--text4);font-weight:500">Sin proceso vinculado</span>')+'</div>'
-            +(e.expediente&&e.expediente!=='—'?'<div style="font-size:11px;color:var(--text3);margin-top:1px">'+esc(e.expediente)+'</div>':'')
-            +(e.supervisor&&e.supervisor!=='—'?'<div style="font-size:10.5px;color:var(--text4);margin-top:1px">Supervisor: '+esc(e.supervisor)+'</div>':'')
+        // Fila 2: el proceso — cliente, expediente y supervisor en una sola línea; links a la derecha
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--gray-b)">'
+          +'<div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-width:0">'
+            +'<span style="font-weight:700;font-size:12.5px;color:var(--text)">'+(tieneCliente?esc(e.cliente.slice(0,45)):'<span style="color:var(--text4);font-weight:500">Sin proceso vinculado</span>')+'</span>'
+            +(e.expediente&&e.expediente!=='—'?'<span style="font-size:10.5px;color:var(--text3)">'+esc(e.expediente)+'</span>':'')
+            +(e.supervisor&&e.supervisor!=='—'?'<span style="font-size:10px;color:var(--text4)">· Sup: '+esc(e.supervisor)+'</span>':'')
           +'</div>'
-          +'<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0">'
-            +(e.nroId?'<a class="id-link" href="'+procUrl+'" target="_blank" style="font-size:11px;white-space:nowrap">🔗 Ver proceso en MyBiG</a>':'')
-            +(e.nrotarea?'<a class="id-link" href="'+tareaUrl+'" target="_blank" style="font-size:11px;white-space:nowrap;color:var(--text3)">📋 Ver tarea #'+e.nrotarea+'</a>':'')
+          +'<div style="display:flex;gap:9px;align-items:center;flex-shrink:0">'
+            +(e.nroId?'<a class="id-link" href="'+procUrl+'" target="_blank" title="Ver proceso en MyBiG" style="font-size:11px;white-space:nowrap">🔗 Proceso</a>':'')
+            +(e.nrotarea?'<a class="id-link" href="'+tareaUrl+'" target="_blank" title="Ver tarea en MyBiG" style="font-size:11px;white-space:nowrap;color:var(--text3)">📋 #'+e.nrotarea+'</a>':'')
           +'</div>'
         +'</div>'
         // Fila 3: qué pasó
         +bodyHtml+extraHtml
-        // Fila 4: quién lo hizo y para quién es (siempre visibles, no solo como metadata suelta)
-        +'<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--text3);margin:8px 0 0">'
-          +'<span>👤 Hecho por: <strong style="color:var(--text)">'+esc(e.autor&&e.autor!=='—'?e.autor:'Sistema')+'</strong></span>'
-          +(e.destinatario?'<span>📨 Para: <strong style="color:var(--amber)">'+esc(e.destinatario)+'</strong></span>':'')
+        // Fila 4: quién lo hizo + para quién es + qué hay que hacer, compactado en una franja
+        +'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:10.5px;color:var(--text3);margin:6px 0 0">'
+          +'<span>👤 <strong style="color:var(--text)">'+esc(e.autor&&e.autor!=='—'?e.autor:'Sistema')+'</strong></span>'
+          +(e.destinatario?'<span>📨 <strong style="color:var(--amber)">'+esc(e.destinatario)+'</strong></span>':'')
+          +(accionTxt?'<span style="margin-left:auto;font-weight:600;color:'+(urgencia(e)==='alta'?'#c2410c':urgencia(e)==='media'?'var(--red)':'#1d4ed8')+'">'+accionTxt+'</span>':'')
         +'</div>'
-        +(accionTxt?'<div style="margin:8px 0 0;padding:6px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);font-size:11.5px;font-weight:600;color:#1d4ed8">'+accionTxt+'</div>':'')
-        +'<div class="pp-card-actions" style="margin-top:10px">'
+        +'<div class="pp-card-actions" style="margin-top:8px">'
           +(e.tipo==='aprobacion' && e.estado!=='aprobada' && e.estado!=='rechazada'
             ?'<button class="pp-btn pp-btn-apro" onclick="aprobarTarea(\''+e.id+'\',\''+esc(e.tareaId||'')+'\')">✓ Aprobar</button>'
              +'<button class="pp-btn pp-btn-rech" onclick="rechazarTarea(\''+e.id+'\',\''+esc(e.tareaId||'')+'\')">✗ Rechazar</button>'
