@@ -3879,7 +3879,9 @@ function selectRow(tr){
 }
 
 function startPortal(){
-  if(typeof PORTAL_DATA!=='undefined'&&PORTAL_DATA.length) DATA=PORTAL_DATA;
+  // Los datos del Excel ya no vienen de un data.js estático: llegan de Firestore
+  // (vía cargarDatosExcelDesdeKV, disparado al iniciar sesión). Este arranque solo
+  // prepara la interfaz para cuando todavía no hay datos cargados.
   const gcalInp = document.getElementById('gcal-date');
   if(gcalInp) gcalInp.value = new Date().toISOString().slice(0,10);
   // Inicializar contadores de paginación visibles aunque no haya datos
@@ -3892,11 +3894,7 @@ function startPortal(){
   render();
 }
 (function(){
-  var s=document.createElement('script');
-  s.src='data.js?v='+Date.now();
-  s.onload=startPortal;
-  s.onerror=startPortal;
-  document.head.appendChild(s);
+  startPortal();
 })();
 
 
