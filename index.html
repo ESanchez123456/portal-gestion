@@ -724,6 +724,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .juz-field input,.juz-field select{padding:8px 11px;border-radius:var(--r);border:1px solid var(--gray-b);font-size:12.5px;font-family:var(--font);outline:none}
 .juz-field input:focus,.juz-field select:focus{border-color:var(--blue)}
 .juz-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@keyframes pulseEnVivo{0%,100%{opacity:1}50%{opacity:.25}}
 </style>
 </head>
 <body>
@@ -919,7 +920,11 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
     <div class="mfb-semana">
       <span style="font-size:13px">⏱</span>
-      Semana 23 · <strong id="lbl-sem" style="color:var(--text2)">02/06/2026</strong>
+      <strong id="lbl-sem" style="color:var(--text2)">Actualizado el 02/06/2026</strong>
+      <span id="lbl-envivo" style="display:none;align-items:center;gap:5px;margin-left:10px;font-size:10.5px;font-weight:700;color:#16a34a;letter-spacing:.3px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;display:inline-block;animation:pulseEnVivo 1.6s infinite"></span>
+        EN VIVO
+      </span>
     </div>
   </div>
 
@@ -2595,6 +2600,8 @@ window.__onAuthStateChanged = function(user){
     if(appRoot) appRoot.classList.add('ready');
     if(loading) loading.classList.remove('show');
     window.__fbListenKV(onKVKeysChanged);
+    const lblEnVivo = document.getElementById('lbl-envivo');
+    if(lblEnVivo) lblEnVivo.style.display = 'inline-flex';
     // Si alguien ya publicó un Excel procesado y yo no soy quien lo sube,
     // lo recibo automáticamente (no tengo que cargar nada manualmente).
     if(!esUploaderAutorizado()){
@@ -2841,6 +2848,16 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 // de JSON.stringify(), nunca mete una comilla doble cruda que rompa el atributo.
 function jsStrAttr(s){
   return "'"+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n')+"'";
+}
+// Formatea una fecha como "dd/mm/aaaa, HH:mm" (hora local del navegador).
+function fmtFechaHora(d){
+  if(!(d instanceof Date) || isNaN(d.getTime())) d = new Date();
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return dd+'/'+mm+'/'+yy+', '+hh+':'+mi;
 }
 function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+w+'px"':'')+' title="'+esc(v)+'">'+esc(v)+'</td>';}
 
@@ -3648,7 +3665,7 @@ function procesarExcel(){
     if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>clearGroupAud(g));
     page=1;audPage=1;
 
-    finalizarVistaDespuesDeCarga('Actualizado · ');
+    finalizarVistaDespuesDeCarga('Actualizado el '+fmtFechaHora(new Date())+' · ');
     document.getElementById('modalCarga').classList.remove('show');
     showToast('✓ '+DATA.length.toLocaleString()+' procesos · '+TAREAS_GESTION_EXCEL.length+' tareas de gestión');
 
@@ -3990,7 +4007,8 @@ function cargarDatosExcelDesdeKV(){
   window.SENTENCIAS_BY_ID = payload.SENTENCIAS_BY_ID || {};
   window.PLANNER_EXCEL_TAREAS = payload.PLANNER_EXCEL_TAREAS || [];
 
-  const quien = meta.uploadedBy ? ('Actualizado por '+meta.uploadedBy+' · ') : 'Actualizado · ';
+  const fechaMeta = meta.uploadedAt ? new Date(meta.uploadedAt) : new Date();
+  const quien = 'Actualizado el '+fmtFechaHora(fechaMeta)+' · ';
   finalizarVistaDespuesDeCarga(quien);
   return true;
 }
