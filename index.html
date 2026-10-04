@@ -5583,7 +5583,7 @@ function ptBuscarProc(){
   if(q.length<2){ dd.style.display='none'; return; }
   const matches = DATA.filter(r=>(r.cliente+r.expediente+String(r.id)).toLowerCase().includes(q)).slice(0,8);
   if(!matches.length){ dd.style.display='none'; return; }
-  dd.innerHTML = matches.map(r=>`<div style="padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--gray-b)" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''" onclick="ptSelProc(${r.id},'${esc(r.cliente)}','${esc(r.expediente)}')">#${r.id} — <strong>${esc(r.cliente.slice(0,30))}</strong> <span style="color:var(--text4);font-size:10.5px">${esc(r.expediente)}</span></div>`).join('');
+  dd.innerHTML = matches.map(r=>`<div style="padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--gray-b)" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''" onclick="ptSelProc(${r.id},${jsStrAttr(r.cliente)},${jsStrAttr(r.expediente)})">#${r.id} — <strong>${esc(r.cliente.slice(0,30))}</strong> <span style="color:var(--text4);font-size:10.5px">${esc(r.expediente)}</span></div>`).join('');
   dd.style.display='block';
 }
 function ptSelProc(id, cliente, exp){
