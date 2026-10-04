@@ -5985,6 +5985,7 @@ function toggleFavTarea(id, cliente, tipo){
     if(t){ cliente=t.cliente||''; tipo=t.tipo||''; }
   }
   if(favs[id]){
+    if(!puedeQuitarFav(favs[id])){ avisoFavAjeno(favs[id]); return; }
     delete favs[id];
     saveFavTareas(favs);
     updateFavBadge(); renderGestion(); renderFavoritos();
@@ -5998,7 +5999,7 @@ function toggleFavTarea(id, cliente, tipo){
   // favorito de inmediato para él/ella — sin preguntar a quién se asigna.
   const nombreActualTar = window.CURRENT_USER_NAME || '';
   if(typeof GESTION_FAV_USERS!=='undefined' && GESTION_FAV_USERS.includes(nombreActualTar)){
-    favs[id] = { id, cliente: cliente||'', tipo: tipo||'', usuarios:[nombreActualTar], ts: Date.now() };
+    favs[id] = { id, cliente: cliente||'', tipo: tipo||'', usuarios:[nombreActualTar], ts: Date.now(), creadoPor: nombreActualTar };
     saveFavTareas(favs);
     updateFavBadge(); renderGestion(); renderFavoritos();
     if(window.__fbLogAudit){
@@ -6438,6 +6439,23 @@ function getFavUsuarios(f){
   if(f.usuario) return [f.usuario];
   return [];
 }
+// ¿Puede la sesión actual quitar este favorito (de proceso o de tarea)?
+// Solo: el admin, alguien a quien está asignado el favorito, o quien lo marcó
+// (creadoPor, guardado desde ahora). Los favoritos viejos sin creadoPor se
+// rigen por la lista de asignados.
+function puedeQuitarFav(f){
+  if(!f) return true;
+  if(typeof esAdmin==='function' && esAdmin()) return true;
+  const yo = window.CURRENT_USER_NAME || '';
+  if(!yo) return false;
+  if(getFavUsuarios(f).includes(yo)) return true;
+  if(f.creadoPor && f.creadoPor===yo) return true;
+  return false;
+}
+function avisoFavAjeno(f){
+  const duenos = getFavUsuarios(f).join(', ') || 'otro usuario';
+  showToast('🔒 Este favorito es de '+duenos+' — solo esa persona o el admin pueden quitarlo');
+}
 
 let favPendingId = null;
 let favSelectedUsers = [];
@@ -6449,7 +6467,8 @@ function toggleFav(id){
   const favs = getFavs();
   const key = String(id);
   if(favs[key]){
-    // Quitar — solo el dueño puede quitarlo, pero como no hay login, cualquiera puede
+    // Quitar — solo el dueño (asignado / quien lo marcó) o el admin
+    if(!puedeQuitarFav(favs[key])){ avisoFavAjeno(favs[key]); return; }
     delete favs[key];
     saveFavs(favs);
     updateFavBadge();
@@ -6462,7 +6481,7 @@ function toggleFav(id){
   // favorito de inmediato para él/ella — sin preguntar a quién se asigna.
   const nombreActual = window.CURRENT_USER_NAME || '';
   if(GESTION_FAV_USERS.includes(nombreActual)){
-    favs[key] = { id, usuarios:[nombreActual], ts: Date.now(), obs:'' };
+    favs[key] = { id, usuarios:[nombreActual], ts: Date.now(), obs:'', creadoPor: nombreActual };
     saveFavs(favs);
     updateFavBadge();
     render(); renderAud();
@@ -6753,7 +6772,8 @@ function confirmarFav(){
       cliente: favPendingTareaCliente,
       tipo: favPendingTareaTipo,
       usuarios: [...favSelectedUsers],
-      ts: Date.now()
+      ts: Date.now(),
+      creadoPor: window.CURRENT_USER_NAME || ''
     };
     saveFavTareas(favs);
     document.getElementById('modalFavUser').classList.remove('show');
@@ -6773,7 +6793,8 @@ function confirmarFav(){
     id: favPendingId,
     usuarios: [...favSelectedUsers],
     ts: Date.now(),
-    obs: ''
+    obs: '',
+    creadoPor: window.CURRENT_USER_NAME || ''
   };
   saveFavs(favs);
   document.getElementById('modalFavUser').classList.remove('show');
@@ -6793,7 +6814,7 @@ function getFavBadge(id){
   const usuarios = activo ? getFavUsuarios(favs[key]).join(', ') : '';
   if(activo){
     return '<td style="width:28px;text-align:center;padding:0 4px;overflow:visible" onclick="event.stopPropagation()">'
-      +'<span class="fav-star activo" onclick="toggleFav('+id+')" title="Favorito de '+esc(usuarios)+' — click para quitar">⭐</span>'
+      +'<span class="fav-star activo" onclick="toggleFav('+id+')" title="Favorito de '+esc(usuarios)+(puedeQuitarFav(favs[key])?' — click para quitar':' — solo '+esc(usuarios)+' o el admin pueden quitarlo')+'"'+(puedeQuitarFav(favs[key])?'':' style="cursor:not-allowed"')+'>⭐</span>'
       +'</td>';
   }
   // Ver si ya está ocupado por alguien más (para bloquear)
