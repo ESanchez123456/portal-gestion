@@ -713,7 +713,8 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .juz-cond-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:9px;background:var(--gray-l);color:var(--text3);border:1px solid var(--gray-b);text-transform:uppercase;letter-spacing:.03em;flex-shrink:0}
 .juz-enc-chip{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;padding:0 8px;border-radius:11px;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.02em;flex-shrink:0}
 .juz-enc-chip.vacio{background:var(--gray-b)!important;color:var(--text4)}
-.juz-mag-actions{display:flex;gap:2px;opacity:0;transition:opacity .12s;flex-shrink:0}
+.juz-mag-actions{display:flex;gap:2px;opacity:.55;transition:opacity .12s;flex-shrink:0}
+.juz-mag-row:hover .juz-mag-actions,.juz-mag-actions:hover{opacity:1}
 .juz-mag-actions button{width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--text4);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
 .juz-mag-actions button:hover{background:var(--gray-b);color:var(--text)}
 .juz-mag-actions button.del:hover{background:var(--red-l);color:var(--red)}
@@ -2775,6 +2776,12 @@ function instBadge(i){
 function sitBadge(s){return s==='EJECUCION'?'<span class="badge b-g">Ejec.</span>':'<span class="badge b-b">En giro</span>';}
 function relBadge(r){return r==='SENSIBLE'?'<span class="badge b-r">Sensible</span>':'<span style="color:var(--text4)">—</span>';}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// Literal de cadena JS (comillas simples) seguro para insertar dentro de un
+// atributo HTML onclick="..." delimitado por comillas dobles — a diferencia
+// de JSON.stringify(), nunca mete una comilla doble cruda que rompa el atributo.
+function jsStrAttr(s){
+  return "'"+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n')+"'";
+}
 function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+w+'px"':'')+' title="'+esc(v)+'">'+esc(v)+'</td>';}
 
 // Poblar distritos
@@ -6412,14 +6419,14 @@ function renderJuzgados(){
       const grupo=organos[org];
       html+='<div class="juz-org-card">';
       html+='<div class="juz-org-head"><div><div class="juz-org-name">'+esc(org)+'</div><div class="juz-org-meta">'+esc(grupo.tipo)+' · '+grupo.items.length+' magistrado'+(grupo.items.length!==1?'s':'')+'</div></div>'
-        +'<button class="btn-sm" onclick="abrirModalJuzgado(null,'+JSON.stringify(org)+','+JSON.stringify(dist)+','+JSON.stringify(grupo.tipo)+')">+ Magistrado</button></div>';
+        +'<button class="btn-sm" onclick="abrirModalJuzgado(null,'+jsStrAttr(org)+','+jsStrAttr(dist)+','+jsStrAttr(grupo.tipo)+')">+ Magistrado</button></div>';
       grupo.items.forEach(j=>{
         const encColor=j.encargado?colorEncargado(j.encargado):null;
         html+='<div class="juz-mag-row">'
           +'<div class="juz-mag-name" title="'+esc(j.magistrado)+'">'+esc(j.magistrado||'—')+'</div>'
           +(j.condicion?'<span class="juz-cond-badge">'+esc(j.condicion)+'</span>':'')
           +'<span class="juz-enc-chip'+(j.encargado?'':' vacio')+'" style="'+(encColor?'background:'+encColor:'')+'">'+(j.encargado?esc(j.encargado):'—')+'</span>'
-          +(puedeEditar?'<div class="juz-mag-actions"><button title="Editar" onclick="abrirModalJuzgado('+JSON.stringify(j.id)+')">✎</button><button class="del" title="Eliminar" onclick="borrarJuzgado('+JSON.stringify(j.id)+')">✕</button></div>':'')
+          +(puedeEditar?'<div class="juz-mag-actions"><button title="Editar" onclick="abrirModalJuzgado('+jsStrAttr(j.id)+')">✎</button><button class="del" title="Eliminar" onclick="borrarJuzgado('+jsStrAttr(j.id)+')">✕</button></div>':'')
           +'</div>';
       });
       html+='</div>';
