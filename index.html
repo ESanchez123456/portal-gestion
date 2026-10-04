@@ -954,6 +954,33 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
       </div>
     </div>
 
+    <!-- ÓRGANO JURISDICCIONAL (filtro múltiple, buscable) -->
+    <div class="fdd" id="fdd-organo">
+      <div class="fdd-btn" onclick="toggleFdd('fdd-organo')">
+        Órgano
+        <span class="fdd-cnt" id="cnt-organo"></span>
+        <span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()" style="min-width:280px">
+        <input type="text" class="fdd-search" placeholder="Buscar órgano..." oninput="filtrarFddOrgano(this.value)">
+        <div id="fdd-organo-items" class="fdd-panel-scroll"></div>
+        <span class="fdd-clear" onclick="clearGroup('organo')">Limpiar</span>
+      </div>
+    </div>
+
+    <!-- RESPONSABLE DEL ÓRGANO (encargado de gestión, según Juzgados) -->
+    <div class="fdd" id="fdd-encargado">
+      <div class="fdd-btn" onclick="toggleFdd('fdd-encargado')">
+        Responsable
+        <span class="fdd-cnt" id="cnt-encargado"></span>
+        <span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()">
+        <div id="fdd-encargado-items"></div>
+        <span class="fdd-clear" onclick="clearGroup('encargado')">Limpiar</span>
+      </div>
+    </div>
+
     <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
 
     <!-- INSTANCIA -->
@@ -1248,6 +1275,27 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <span class="fdd-dot" style="background:var(--text3)"></span>Retainer
         </div>
         <span class="fdd-clear" onclick="clearGroupAud('pacto')">Limpiar</span>
+      </div>
+    </div>
+    <!-- ÓRGANO JURISDICCIONAL (filtro múltiple, buscable) -->
+    <div class="fdd" id="aud-fdd-organo">
+      <div class="fdd-btn" onclick="toggleFdd('aud-fdd-organo')">Órgano
+        <span class="fdd-cnt" id="aud-cnt-organo"></span><span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()" style="min-width:280px">
+        <input type="text" class="fdd-search" placeholder="Buscar órgano..." oninput="filtrarFddOrganoAud(this.value)">
+        <div id="aud-fdd-organo-items" class="fdd-panel-scroll"></div>
+        <span class="fdd-clear" onclick="clearGroupAud('organo')">Limpiar</span>
+      </div>
+    </div>
+    <!-- RESPONSABLE DEL ÓRGANO -->
+    <div class="fdd" id="aud-fdd-encargado">
+      <div class="fdd-btn" onclick="toggleFdd('aud-fdd-encargado')">Responsable
+        <span class="fdd-cnt" id="aud-cnt-encargado"></span><span style="font-size:12px">▾</span>
+      </div>
+      <div class="fdd-panel" onclick="event.stopPropagation()">
+        <div id="aud-fdd-encargado-items"></div>
+        <span class="fdd-clear" onclick="clearGroupAud('encargado')">Limpiar</span>
       </div>
     </div>
     <div style="width:1px;height:20px;background:var(--gray-b);margin:0 2px"></div>
@@ -2497,6 +2545,8 @@ function onKVKeysChanged(keys){
   try{ if(needPP && typeof renderParalegal==='function') renderParalegal(); }catch(e){}
   try{ if(needPP && typeof renderAdminAuditList==='function') renderAdminAuditList(); }catch(e){}
   try{ if(needJuz && typeof renderJuzgados==='function') renderJuzgados(); }catch(e){}
+  try{ if(needJuz && typeof poblarFddEncargado==='function') poblarFddEncargado(); }catch(e){}
+  try{ if(needJuz && typeof poblarFddEncargadoAud==='function') poblarFddEncargadoAud(); }catch(e){}
   try{ if(needJuz && typeof render==='function' && activeTab==='reporte') render(); }catch(e){}
   try{ if(needJuz && typeof renderAud==='function' && activeTab==='audiencias') renderAud(); }catch(e){}
 }
@@ -2569,7 +2619,7 @@ const TAB_STATE = {
 };
 // Aliases para compatibilidad con código existente (apuntan al tab activo)
 let mf='', colFilters={};
-let fddState={instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set(),bitacora:new Set()};
+let fddState={instancia:new Set(),pacto:new Set(),relevancia:new Set(),cliente:new Set(),bitacora:new Set(),organo:new Set(),encargado:new Set()};
 let page=1,audPage=1,sensPage=1,audSortAsc=true;
 let activeTab='reporte';
 
@@ -2589,7 +2639,7 @@ function toggleFdd(id){
 }
 
 // ── FDD AUDIENCIAS (independiente de Reporte Total) ────────────
-let fddStateAud = {estado:new Set(), instancia:new Set(), pacto:new Set(), cliente:new Set()};
+let fddStateAud = {estado:new Set(), instancia:new Set(), pacto:new Set(), cliente:new Set(), organo:new Set(), encargado:new Set()};
 
 function toggleFddItemAud(el){
   el.classList.toggle('active');
@@ -2607,7 +2657,7 @@ function clearGroupAud(group){
 }
 
 function updateFddCountsAud(){
-  ['estado','instancia','pacto','cliente'].forEach(g=>{
+  ['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>{
     const n = fddStateAud[g].size;
     const cnt = document.getElementById('aud-cnt-'+g);
     if(cnt){ cnt.textContent=n; cnt.classList.toggle('show',n>0); }
@@ -2626,10 +2676,10 @@ function updateActiveChipsAud(){
     sensible:'Sensibles', ejecucion:'Solo ejecución', tarea:'Con tarea',
     'PRIMERA INSTANCIA':'1ra instancia','SEGUNDA INSTANCIA':'2da instancia',
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
-    'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
+    'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer','__sin__':'Sin encargado'
   };
   const chips = [];
-  ['estado','instancia','pacto','cliente'].forEach(g=>{
+  ['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>{
     fddStateAud[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}<button onclick="removeAudFddItem('${g}','${k}')">×</button></div>`);
     });
@@ -2645,7 +2695,7 @@ function removeAudFddItem(group, key){
 }
 
 function resetAllFiltersAud(){
-  ['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
+  ['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>clearGroupAud(g));
   colFiltersAud = {};
   document.querySelectorAll('[data-tab="aud"].col-filter-inp').forEach(i=>{i.value='';i.classList.remove('has-value');});
   audPage=1; renderAud(); updateActiveChipsAud();
@@ -2667,7 +2717,7 @@ function clearGroup(group){
 }
 
 function updateFddCounts(){
-  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente','bitacora','organo','encargado'].forEach(g=>{
     const n=fddState[g].size;
     const cnt=document.getElementById('cnt-'+g);
     cnt.textContent=n;
@@ -2685,9 +2735,9 @@ function updateActiveChips(){
     sensible:'Sensibles',ejecucion:'Solo ejecución',giro:'Solo en giro',tarea:'Con tarea',
     'PRIMERA INSTANCIA':'1ra instancia','SEGUNDA INSTANCIA':'2da instancia',
     'TERCERA INSTANCIA':'3ra/Suprema','EJECUCIÓN':'Ejecución',
-    'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer'
+    'Fijo':'Fijo','Horas':'Horas','Etapas o Hitos':'Etapas','Retainer':'Retainer','__sin__':'Sin encargado'
   };
-  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>{
+  ['instancia','pacto','relevancia','cliente','bitacora','organo','encargado'].forEach(g=>{
     fddState[g].forEach(k=>{
       chips.push(`<div class="af-chip">${labels[k]||k}
         <button onclick="removeFddItem('${g}','${k}')">×</button></div>`);
@@ -2732,7 +2782,7 @@ function clearColFilters(){
   page=1;render();updateActiveChips();
 }
 function resetAllFilters(){
-  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente','bitacora','organo','encargado'].forEach(g=>clearGroup(g));
   clearColFilters();
   document.getElementById('searchbox').value='';
   document.getElementById('sup-filter').value='';
@@ -2747,7 +2797,7 @@ function getFiltered(){
   const q=(document.getElementById('searchbox').value||'').toLowerCase();
   const sup=document.getElementById('sup-filter').value;
   const dist=document.getElementById('dist-filter').value;
-  const inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente,bitSet=fddState.bitacora;
+  const inst=fddState.instancia,pact=fddState.pacto,relv=fddState.relevancia,clienteSet=fddState.cliente,bitSet=fddState.bitacora,organoSet=fddState.organo,encSet=fddState.encargado;
   return DATA.filter(r=>{
     if(q&&!(r.cliente+r.contraparte+r.expediente+r.responsable+r.organo+r.especialista+r.bitacora+r.proxTarea).toLowerCase().includes(q))return false;
     if(sup&&r.supervisor!==sup)return false;
@@ -2761,6 +2811,12 @@ function getFiltered(){
     if(relv.size>0&&!relv.has(r.relevancia))return false;
     if(clienteSet.size>0&&!clienteSet.has(r.cliente))return false;
     if(bitSet.size>0&&!bitSet.has(r.bitacora))return false;
+    if(organoSet.size>0&&!organoSet.has(r.organo))return false;
+    if(encSet.size>0){
+      const es=encargadosPorOrgano(r.organo);
+      const ok=es.some(e=>encSet.has(e))||(es.length===0&&encSet.has('__sin__'));
+      if(!ok)return false;
+    }
     for(const[col,val]of Object.entries(colFilters)){
       if(!String(r[col]||'').toLowerCase().includes(val))return false;
     }
@@ -2794,6 +2850,10 @@ function tdT(v,w,c){return'<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+
   poblarFddCliente();
   poblarFddClienteAud();
   poblarFddBitacora();
+  poblarFddOrgano();
+  poblarFddOrganoAud();
+  poblarFddEncargado();
+  poblarFddEncargadoAud();
 })();
 
 // Poblar filtro múltiple de Relevancia (valores dinámicos, según lo que traiga el Excel)
@@ -2865,6 +2925,76 @@ function filtrarFddClienteAud(q){
     it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
   });
 }
+
+// ── Filtro múltiple de ÓRGANO (Reporte Total + Audiencias) ──
+function poblarFddOrgano(){
+  const cont=document.getElementById('fdd-organo-items');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.organo).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group="organo" data-key="'+esc(v)+'" data-search="'+esc(v.toLowerCase())+'" onclick="toggleFddItem(this)" title="'+esc(v)+'" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span>'+esc(v.length>50?v.slice(0,50)+'…':v)+'</span>'
+    +'</div>'
+  )).join('');
+}
+function filtrarFddOrgano(q){
+  const needle=(q||'').toLowerCase();
+  document.querySelectorAll('#fdd-organo-items .fdd-item').forEach(it=>{
+    it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
+  });
+}
+function poblarFddOrganoAud(){
+  const cont=document.getElementById('aud-fdd-organo-items');
+  if(!cont)return;
+  const vals=[...new Set(DATA.map(r=>r.organo).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  cont.innerHTML=vals.map(v=>(
+    '<div class="fdd-item" data-group-aud="organo" data-key="'+esc(v)+'" data-search="'+esc(v.toLowerCase())+'" onclick="toggleFddItemAud(this)" title="'+esc(v)+'" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span>'+esc(v.length>50?v.slice(0,50)+'…':v)+'</span>'
+    +'</div>'
+  )).join('');
+}
+function filtrarFddOrganoAud(q){
+  const needle=(q||'').toLowerCase();
+  document.querySelectorAll('#aud-fdd-organo-items .fdd-item').forEach(it=>{
+    it.style.display = it.dataset.search.includes(needle) ? '' : 'none';
+  });
+}
+
+// ── Filtro múltiple de RESPONSABLE DEL ÓRGANO (encargado de gestión, de Juzgados) ──
+function itemsFddEncargadoHtml(groupAttr, toggleFn){
+  const set=new Set(); let haySinAsignar=false;
+  DATA.forEach(r=>{
+    const es=(typeof encargadosPorOrgano==='function')?encargadosPorOrgano(r.organo):[];
+    if(es.length) es.forEach(e=>set.add(e)); else haySinAsignar=true;
+  });
+  const vals=Array.from(set).sort();
+  let html=vals.map(v=>(
+    '<div class="fdd-item" '+groupAttr+'="encargado" data-key="'+esc(v)+'" onclick="'+toggleFn+'(this)">'
+    +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+    +'<span class="fdd-dot" style="background:'+colorEncargado(v)+'"></span>'+esc(v)
+    +'</div>'
+  )).join('');
+  if(haySinAsignar){
+    html+='<div class="fdd-item" '+groupAttr+'="encargado" data-key="__sin__" onclick="'+toggleFn+'(this)">'
+      +'<div class="fdd-check"><svg class="fdd-check-mark" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      +'<span class="fdd-dot" style="background:var(--gray-b)"></span>Sin asignar'
+      +'</div>';
+  }
+  return html;
+}
+function poblarFddEncargado(){
+  const cont=document.getElementById('fdd-encargado-items');
+  if(!cont)return;
+  cont.innerHTML=itemsFddEncargadoHtml('data-group','toggleFddItem');
+}
+function poblarFddEncargadoAud(){
+  const cont=document.getElementById('aud-fdd-encargado-items');
+  if(!cont)return;
+  cont.innerHTML=itemsFddEncargadoHtml('data-group-aud','toggleFddItemAud');
+}
+
 function rebuildTipos(){
   const sel=document.getElementById('aud-tipo');
   sel.innerHTML='<option value="">Todos los tipos de audiencia</option>';
@@ -2971,6 +3101,16 @@ function renderAud(){
     // FDD Cliente
     const clienteSetAud=fddStateAud.cliente;
     if(clienteSetAud.size&&!clienteSetAud.has(r.cliente))return false;
+    // FDD Órgano
+    const organoSetAud=fddStateAud.organo;
+    if(organoSetAud.size&&!organoSetAud.has(r.organo))return false;
+    // FDD Responsable del órgano
+    const encSetAud=fddStateAud.encargado;
+    if(encSetAud.size){
+      const esAud=encargadosPorOrgano(r.organo);
+      const okAud=esAud.some(e=>encSetAud.has(e))||(esAud.length===0&&encSetAud.has('__sin__'));
+      if(!okAud)return false;
+    }
     // Filtro fecha desde/hasta
     if(desde||hasta){
       const ft=parseAudFecha(r.proxDiliFecha);
@@ -3499,9 +3639,9 @@ function procesarExcel(){
 
     // Reset filtros
     colFilters={};
-    ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
+    ['instancia','pacto','relevancia','cliente','bitacora','organo','encargado'].forEach(g=>clearGroup(g));
     if(typeof colFiltersAud!=='undefined')colFiltersAud={};
-    if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
+    if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>clearGroupAud(g));
     page=1;audPage=1;
 
     finalizarVistaDespuesDeCarga('Actualizado · ');
@@ -3522,9 +3662,9 @@ function procesarExcel(){
 // de procesar un Excel local o porque se acaban de recibir desde Firestore.
 function finalizarVistaDespuesDeCarga(prefijoLabel){
   colFilters={};
-  ['instancia','pacto','relevancia','cliente','bitacora'].forEach(g=>clearGroup(g));
+  ['instancia','pacto','relevancia','cliente','bitacora','organo','encargado'].forEach(g=>clearGroup(g));
   if(typeof colFiltersAud!=='undefined')colFiltersAud={};
-  if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente'].forEach(g=>clearGroupAud(g));
+  if(typeof clearGroupAud==='function')['estado','instancia','pacto','cliente','organo','encargado'].forEach(g=>clearGroupAud(g));
   page=1;audPage=1;
 
   // Por defecto, Próximas Audiencias solo muestra de hoy en adelante (no las pasadas)
@@ -3546,6 +3686,10 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
   if(typeof poblarFddCliente==='function')poblarFddCliente();
   if(typeof poblarFddBitacora==='function')poblarFddBitacora();
   if(typeof poblarFddClienteAud==='function')poblarFddClienteAud();
+  if(typeof poblarFddOrgano==='function')poblarFddOrgano();
+  if(typeof poblarFddOrganoAud==='function')poblarFddOrganoAud();
+  if(typeof poblarFddEncargado==='function')poblarFddEncargado();
+  if(typeof poblarFddEncargadoAud==='function')poblarFddEncargadoAud();
   rebuildTipos();
   const lbl = document.getElementById('lbl-sem');
   if(lbl) lbl.textContent=(prefijoLabel||'Actualizado · ')+DATA.length.toLocaleString()+' procesos · '+TAREAS_GESTION_EXCEL.length+' tareas';
