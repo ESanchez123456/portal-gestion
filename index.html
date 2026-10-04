@@ -4240,7 +4240,7 @@ function buildTareaFila(t, clase){
   const favTarMap = JSON.parse(FSLS.getItem('fav_tareas')||'{}');
   const esFavTar = !!favTarMap[t.id];
   return '<tr class="'+clase+'">'
-    +'<td style="width:24px;text-align:center;padding:0 2px" onclick="event.stopPropagation()"><span class="tg-fav-star'+(esFavTar?' activo':'')+'" data-tid="'+esc(t.id)+'" onclick="toggleFavTarea(this.dataset.tid)" title="'+(esFavTar?'Quitar de favoritos':'Marcar como favorito')+'">⭐</span></td>'
+    +'<td style="width:24px;text-align:center;padding:0 2px" onclick="event.stopPropagation()"><span class="tg-fav-star'+(esFavTar?' activo':'')+'" data-tid="'+esc(t.id)+'" onclick="toggleFavTarea(this.dataset.tid)" title="'+(esFavTar?esc(favTituloEstrella(favTarMap[t.id])):'Marcar como favorito')+'">⭐</span>'+(esFavTar&&getFavUsuarios(favTarMap[t.id]).length>1?'<span style="display:block;font-size:9px;font-weight:700;color:var(--amber);line-height:1">×'+getFavUsuarios(favTarMap[t.id]).length+'</span>':'')+'</td>'
     +'<td>'+(t.nroId?'<a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+t.nroId+'/" target="_blank">#'+t.nroId+'</a>':'<span style="color:var(--text4)">—</span>')+'</td>'
     +'<td class="td-p" title="'+esc(t.cliente||'—')+'">'+esc((t.cliente||'—').slice(0,22)+(t.cliente&&t.cliente.length>22?'…':''))+'</td>'
     +'<td class="td-m" title="'+esc(t.expediente||'—')+'">'+esc(t.expediente||'—')+'</td>'
@@ -5985,7 +5985,28 @@ function toggleFavTarea(id, cliente, tipo){
     if(t){ cliente=t.cliente||''; tipo=t.tipo||''; }
   }
   if(favs[id]){
-    if(!puedeQuitarFav(favs[id])){ avisoFavAjeno(favs[id]); return; }
+    const fT = favs[id];
+    const usT = getFavUsuarios(fT);
+    const yoT = window.CURRENT_USER_NAME || '';
+    const accionT = favAccionClic(fT);
+    const ctxT = (tipo?tipo+' — ':'')+(cliente||'Tarea #'+id);
+    if(accionT==='lleno'){
+      showToast('⭐ Esta tarea ya la tienen '+MAX_FAV_USUARIOS+' personas ('+usT.join(', ')+') — es el máximo');
+      return;
+    }
+    if(accionT==='sumarme' || accionT==='salirme'){
+      const sumo = accionT==='sumarme';
+      fT.usuarios = sumo ? [...usT, yoT] : usT.filter(u=>u!==yoT);
+      delete fT.usuario;
+      saveFavTareas(favs);
+      updateFavBadge(); renderGestion(); renderFavoritos();
+      if(window.__fbLogAudit){
+        window.__fbLogAudit({key:'favtarea_'+id, accion: sumo?'fav_add':'fav_remove', label:'', ctx: ctxT+(sumo?' (se sumó '+yoT+'; también lo tiene '+usT.join(', ')+')':' (solo '+yoT+'; lo conserva '+fT.usuarios.join(', ')+')'), byName: window.CURRENT_USER_NAME||''});
+      }
+      showToast(sumo ? '⭐ Tarea agregada a tus favoritos — también la tiene '+usT.join(', ') : '⭐ Tarea quitada de tus favoritos — la sigue teniendo '+fT.usuarios.join(', '));
+      return;
+    }
+    if(!puedeQuitarFav(fT)){ avisoFavAjeno(fT); return; }
     delete favs[id];
     saveFavTareas(favs);
     updateFavBadge(); renderGestion(); renderFavoritos();
@@ -6456,6 +6477,33 @@ function avisoFavAjeno(f){
   const duenos = getFavUsuarios(f).join(', ') || 'otro usuario';
   showToast('🔒 Este favorito es de '+duenos+' — solo esa persona o el admin pueden quitarlo');
 }
+// Un mismo proceso/tarea puede ser favorito de hasta 3 personas del equipo de Gestión.
+const MAX_FAV_USUARIOS = 3;
+// Qué pasa al hacer clic en la estrella de un favorito que YA existe:
+//  'sumarme'  → soy de Gestión y no estoy en la lista: me agrego (si hay cupo)
+//  'lleno'    → soy de Gestión, no estoy y ya hay 3 personas
+//  'salirme'  → estoy en la lista junto a otros: solo me quito yo, los demás lo conservan
+//  'quitar'   → era solo mío (o soy admin/paralegal): se quita el favorito completo
+function favAccionClic(f){
+  const yo = window.CURRENT_USER_NAME || '';
+  const us = getFavUsuarios(f);
+  const soyGestion = typeof GESTION_FAV_USERS!=='undefined' && GESTION_FAV_USERS.includes(yo);
+  if(soyGestion && !us.includes(yo)) return us.length>=MAX_FAV_USUARIOS ? 'lleno' : 'sumarme';
+  if(soyGestion && us.includes(yo) && us.length>1) return 'salirme';
+  return 'quitar';
+}
+function favTituloEstrella(f){
+  const us = getFavUsuarios(f).join(', ');
+  const a = favAccionClic(f);
+  if(a==='sumarme') return 'Favorito de '+us+' — click para sumarte también';
+  if(a==='lleno')   return 'Favorito de '+us+' — ya lo tienen '+MAX_FAV_USUARIOS+' personas (máximo)';
+  if(a==='salirme') return 'Favorito de '+us+' — click para quitarte tú (los demás lo conservan)';
+  return puedeQuitarFav(f) ? 'Favorito de '+us+' — click para quitar' : 'Favorito de '+us+' — solo '+us+' o el admin pueden quitarlo';
+}
+function favEstrellaBloqueada(f){
+  const a = favAccionClic(f);
+  return a==='lleno' || (a==='quitar' && !puedeQuitarFav(f));
+}
 
 let favPendingId = null;
 let favSelectedUsers = [];
@@ -6467,8 +6515,36 @@ function toggleFav(id){
   const favs = getFavs();
   const key = String(id);
   if(favs[key]){
-    // Quitar — solo el dueño (asignado / quien lo marcó) o el admin
-    if(!puedeQuitarFav(favs[key])){ avisoFavAjeno(favs[key]); return; }
+    const f = favs[key];
+    const us = getFavUsuarios(f);
+    const yoFav = window.CURRENT_USER_NAME || '';
+    const accion = favAccionClic(f);
+    if(accion==='lleno'){
+      showToast('⭐ Este proceso ya lo tienen '+MAX_FAV_USUARIOS+' personas ('+us.join(', ')+') — es el máximo');
+      return;
+    }
+    if(accion==='sumarme'){
+      f.usuarios = [...us, yoFav]; delete f.usuario;
+      saveFavs(favs);
+      updateFavBadge();
+      render(); renderAud();
+      try{ renderFavoritos(); }catch(e){}
+      registrarAuditoriaFav('fav_add', id, '(se sumó '+yoFav+'; también lo tiene '+us.join(', ')+')');
+      showToast('⭐ Agregado a tus favoritos — también lo tiene '+us.join(', '));
+      return;
+    }
+    if(accion==='salirme'){
+      f.usuarios = us.filter(u=>u!==yoFav); delete f.usuario;
+      saveFavs(favs);
+      updateFavBadge();
+      render(); renderAud();
+      try{ renderFavoritos(); }catch(e){}
+      registrarAuditoriaFav('fav_remove', id, '(solo '+yoFav+'; lo conserva '+f.usuarios.join(', ')+')');
+      showToast('⭐ Quitado de tus favoritos — lo sigue teniendo '+f.usuarios.join(', '));
+      return;
+    }
+    // Quitar el favorito completo — solo el dueño (asignado / quien lo marcó) o el admin
+    if(!puedeQuitarFav(f)){ avisoFavAjeno(f); return; }
     delete favs[key];
     saveFavs(favs);
     updateFavBadge();
@@ -6750,7 +6826,14 @@ function selFavUser(el){
   el.classList.toggle('sel');
   const user = el.dataset.user;
   if(el.classList.contains('sel')){
-    if(!favSelectedUsers.includes(user)) favSelectedUsers.push(user);
+    if(!favSelectedUsers.includes(user)){
+      if(favSelectedUsers.length>=MAX_FAV_USUARIOS){
+        el.classList.remove('sel');
+        showToast('⭐ Máximo '+MAX_FAV_USUARIOS+' personas por favorito');
+        return;
+      }
+      favSelectedUsers.push(user);
+    }
   } else {
     favSelectedUsers = favSelectedUsers.filter(u=>u!==user);
   }
@@ -6814,7 +6897,8 @@ function getFavBadge(id){
   const usuarios = activo ? getFavUsuarios(favs[key]).join(', ') : '';
   if(activo){
     return '<td style="width:28px;text-align:center;padding:0 4px;overflow:visible" onclick="event.stopPropagation()">'
-      +'<span class="fav-star activo" onclick="toggleFav('+id+')" title="Favorito de '+esc(usuarios)+(puedeQuitarFav(favs[key])?' — click para quitar':' — solo '+esc(usuarios)+' o el admin pueden quitarlo')+'"'+(puedeQuitarFav(favs[key])?'':' style="cursor:not-allowed"')+'>⭐</span>'
+      +'<span class="fav-star activo" onclick="toggleFav('+id+')" title="'+esc(favTituloEstrella(favs[key]))+'"'+(favEstrellaBloqueada(favs[key])?' style="cursor:not-allowed"':'')+'>⭐</span>'
+      +(getFavUsuarios(favs[key]).length>1?'<span style="display:block;font-size:9px;font-weight:700;color:var(--amber);line-height:1" title="'+esc(usuarios)+'">×'+getFavUsuarios(favs[key]).length+'</span>':'')
       +'</td>';
   }
   // Ver si ya está ocupado por alguien más (para bloquear)
@@ -6908,7 +6992,8 @@ function renderFavoritos(){
           ?'<div style="max-height:100px;overflow-y:auto;margin-bottom:.4rem;display:flex;flex-direction:column;gap:4px">'+hist.map((h,i)=>'<div style="padding:5px 9px;background:var(--gray-l);border-radius:var(--r);border-left:3px solid #f59e0b;font-size:11.5px"><div>'+esc(h.texto)+'</div><div style="font-size:10px;color:var(--text4);display:flex;justify-content:space-between"><span>'+esc(h.fecha||'')+'</span><button onclick="borrarFavComentario('+f.id+','+i+')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0">✕</button></div></div>').join('')+'</div>'
           :'<div style="font-size:11px;color:var(--text4);margin-bottom:.4rem">Sin comentarios.</div>';
         const asignadosProc = getFavUsuarios(f);
-        const asignadosHtml = asignadosProc.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosProc.map(u=>esc(u)).join(', ')+'</div>':'';
+        const otrosProc = asignadosProc.filter(u=>u!==usr);
+        const asignadosHtml = otrosProc.length?'<div style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:10px;padding:2px 9px;margin-top:4px">👥 También lo tiene '+otrosProc.map(u=>esc(u)).join(', ')+'</div>':'';
         const inactivoHtml = !proc?motivoFavInactivo(f.id,'Este proceso'):'';
         return '<div class="fav-card">'
           +'<div class="fav-card-header"><span class="fav-star activo" onclick="toggleFav('+f.id+')" style="flex-shrink:0">⭐</span>'
@@ -6965,7 +7050,8 @@ function renderFavoritos(){
         :'<div style="font-size:11px;color:var(--text4);margin-bottom:.4rem">Sin comentarios.</div>';
       const adjHtml = adj.length?'<div style="margin-bottom:.4rem"><div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">📎 Adjuntos</div>'+adj.map(a=>'<div class="ag-adj-item"><span>'+(a.tipo.includes('image')?'🖼️':a.tipo.includes('pdf')?'📄':'📎')+'</span><a href="'+a.data+'" download="'+esc(a.nombre)+'">'+esc(a.nombre)+'</a></div>').join('')+'</div>':'';
       const asignadosTar = getFavUsuarios(f);
-      const asignadosTarHtml = asignadosTar.length>1?'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">👥 '+asignadosTar.map(u=>esc(u)).join(', ')+'</div>':'';
+      const otrosTar = asignadosTar.filter(u=>u!==usr);
+      const asignadosTarHtml = otrosTar.length?'<div style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:10px;padding:2px 9px;margin-top:4px">👥 También la tiene '+otrosTar.map(u=>esc(u)).join(', ')+'</div>':'';
       const inactivoTarHtml = !tarea
         ? '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:5px 9px;margin-bottom:.6rem">⚠ Esta tarea ya no existe en Tareas de Gestión (fue eliminada o ya no está en el último Excel) — el favorito y sus comentarios se conservan.</div>'
         : (!proc ? motivoFavInactivo(tarea.nroId,'El proceso de esta tarea') : '');
