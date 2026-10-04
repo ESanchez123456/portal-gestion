@@ -6378,6 +6378,7 @@ function renderJuzgados(){
     porDistrito[d][o].items.push(j);
   });
 
+  const puedeEditar = esAdmin();
   let html='';
   Object.keys(porDistrito).sort().forEach(dist=>{
     html+='<div class="juz-dist-head">📍 '+esc(dist)+'</div>';
@@ -6393,7 +6394,7 @@ function renderJuzgados(){
           +'<div class="juz-mag-name" title="'+esc(j.magistrado)+'">'+esc(j.magistrado||'—')+'</div>'
           +(j.condicion?'<span class="juz-cond-badge">'+esc(j.condicion)+'</span>':'')
           +'<span class="juz-enc-chip'+(j.encargado?'':' vacio')+'" style="'+(encColor?'background:'+encColor:'')+'">'+(j.encargado?esc(j.encargado):'—')+'</span>'
-          +'<div class="juz-mag-actions"><button title="Editar" onclick="abrirModalJuzgado('+JSON.stringify(j.id)+')">✎</button><button class="del" title="Eliminar" onclick="borrarJuzgado('+JSON.stringify(j.id)+')">✕</button></div>'
+          +(puedeEditar?'<div class="juz-mag-actions"><button title="Editar" onclick="abrirModalJuzgado('+JSON.stringify(j.id)+')">✎</button><button class="del" title="Eliminar" onclick="borrarJuzgado('+JSON.stringify(j.id)+')">✕</button></div>':'')
           +'</div>';
       });
       html+='</div>';
@@ -6403,6 +6404,7 @@ function renderJuzgados(){
 }
 
 function abrirModalJuzgado(id, organoPre, distritoPre, tipoPre){
+  if(id && !esAdmin()){ showToast('⚠ Solo el administrador puede editar o eliminar juzgados'); return; }
   const arr=getJuzgados();
   const distritos=Array.from(new Set(arr.map(j=>j.distrito).filter(Boolean))).sort();
   const tipos=Array.from(new Set(arr.map(j=>j.tipoJuzgado).filter(Boolean))).sort();
@@ -6442,6 +6444,7 @@ function abrirModalJuzgado(id, organoPre, distritoPre, tipoPre){
 
 function guardarJuzgadoModal(){
   const id=document.getElementById('juz-edit-id').value;
+  if(id && !esAdmin()){ showToast('⚠ Solo el administrador puede editar o eliminar juzgados'); return; }
   const distrito=(document.getElementById('juz-distrito').value||'').trim().toUpperCase();
   const tipoJuzgado=(document.getElementById('juz-tipo').value||'').trim().toUpperCase();
   const organo=(document.getElementById('juz-organo').value||'').trim().toUpperCase();
@@ -6464,6 +6467,7 @@ function guardarJuzgadoModal(){
 }
 
 function borrarJuzgado(id){
+  if(!esAdmin()){ showToast('⚠ Solo el administrador puede eliminar juzgados'); return; }
   if(!confirm('¿Eliminar este magistrado del listado de Juzgados?')) return;
   const arr=getJuzgados().filter(j=>j.id!==id);
   saveJuzgados(arr);
