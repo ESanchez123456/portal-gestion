@@ -1546,7 +1546,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
   <!-- Vista Favoritos -->
   <div id="tg-view-favoritos" style="display:none">
     <div style="display:flex;gap:10px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
-      <select class="sel-inp" id="fav-user" onchange="renderFavoritos()">
+      <select class="sel-inp" id="fav-user" onchange="renderFavoritos()" title="Por defecto ves tus favoritos; elige otro usuario o 'Todos' para ver los de los demás">
         <option value="">Todos los usuarios</option>
         <option>Roberto Matallana</option>
         <option>Carlos Morales</option>
@@ -2564,6 +2564,7 @@ window.__onAuthStateChanged = function(user){
   if(!user){
     window.CURRENT_USER_EMAIL = '';
     window.CURRENT_USER_NAME  = '';
+    window.__favUserDefaultAplicado = false;
     if(gate) gate.classList.remove('hidden');
     if(appRoot) appRoot.classList.remove('ready');
     document.getElementById('loginPass') && (document.getElementById('loginPass').value='');
@@ -6950,6 +6951,12 @@ function motivoFavInactivo(id, etiquetaItem){
 function renderFavoritos(){
   const favs    = getFavs();
   const favTar  = getFavTareas();
+  // Por defecto cada persona ve SUS favoritos; con el filtro puede ver los de otros o "Todos".
+  const selFavUser0 = document.getElementById('fav-user');
+  if(selFavUser0 && !window.__favUserDefaultAplicado && window.CURRENT_USER_NAME){
+    window.__favUserDefaultAplicado = true;
+    if(Array.from(selFavUser0.options).some(o=>o.value===window.CURRENT_USER_NAME)) selFavUser0.value = window.CURRENT_USER_NAME;
+  }
   const userFil = (document.getElementById('fav-user')||{}).value||'';
   const procEnt = Object.values(favs).filter(f=>!userFil||getFavUsuarios(f).includes(userFil));
   const tarEnt  = Object.values(favTar).filter(f=>!userFil||getFavUsuarios(f).includes(userFil));
@@ -6970,7 +6977,7 @@ function renderFavoritos(){
   // ── PROCESOS FAVORITOS ──
   if(procEnt.length){
     const byUser = {};
-    procEnt.forEach(f=>{ getFavUsuarios(f).forEach(u=>{ if(!byUser[u]) byUser[u]=[]; byUser[u].push(f); }); });
+    procEnt.forEach(f=>{ getFavUsuarios(f).forEach(u=>{ if(userFil && u!==userFil) return; if(!byUser[u]) byUser[u]=[]; byUser[u].push(f); }); });
     html += '<div style="font-size:11px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem">⭐ Procesos favoritos</div>';
     html += Object.entries(byUser).map(([usr,items])=>{
       const color = userColors[usr]||'#6b7280';
@@ -7018,7 +7025,7 @@ function renderFavoritos(){
   // ── TAREAS FAVORITAS (agrupadas por usuario) ──
   if(tarEnt.length){
     const byUserTar = {};
-    tarEnt.forEach(f=>{ const us=getFavUsuarios(f); (us.length?us:['Sin asignar']).forEach(u=>{ if(!byUserTar[u]) byUserTar[u]=[]; byUserTar[u].push(f); }); });
+    tarEnt.forEach(f=>{ const us=getFavUsuarios(f); (us.length?us:['Sin asignar']).forEach(u=>{ if(userFil && u!==userFil) return; if(!byUserTar[u]) byUserTar[u]=[]; byUserTar[u].push(f); }); });
     html += '<div style="font-size:11px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.05em;margin:.75rem 0 .6rem">⚡ Tareas favoritas</div>';
     html += Object.entries(byUserTar).map(([usr,items])=>{
       const color = userColors[usr]||'#6b7280';
