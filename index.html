@@ -687,6 +687,41 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 .audit-time{flex-shrink:0;text-align:right;font-size:11px;color:var(--text4);line-height:1.5;white-space:nowrap}
 .tb-user-out{cursor:pointer;color:rgba(255,255,255,.55);text-decoration:underline;font-size:11px}
 .tb-user-out:hover{color:#fff}
+
+/* ── JUZGADOS / MAGISTRADOS ── */
+.juz-stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem}
+.juz-stat{flex:1;min-width:118px;background:var(--white);border:1px solid var(--gray-b);border-radius:var(--r2);padding:.75rem .9rem;box-shadow:var(--sh);display:flex;align-items:center;gap:10px}
+.juz-stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.juz-stat-val{font-size:19px;font-weight:700;line-height:1;margin-bottom:2px}
+.juz-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.03em}
+.juz-filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.juz-filterbar input[type="text"]{padding:7px 11px;border-radius:var(--r);border:1px solid var(--gray-b);font-size:12px;font-family:var(--font);outline:none;min-width:220px;box-shadow:var(--sh)}
+.juz-filterbar input[type="text"]:focus{border-color:var(--blue)}
+.juz-dist-head{font-size:11px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.06em;margin:1.3rem 0 .6rem;display:flex;align-items:center;gap:8px}
+.juz-dist-head:first-child{margin-top:0}
+.juz-dist-head::after{content:'';flex:1;height:1px;background:var(--gray-b)}
+.juz-org-card{background:var(--white);border:1px solid var(--gray-b);border-radius:var(--r2);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
+.juz-org-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:.7rem .9rem;background:linear-gradient(135deg,var(--gray-l),var(--white));border-bottom:1px solid var(--gray-b)}
+.juz-org-name{font-weight:700;font-size:12.5px;color:var(--text)}
+.juz-org-meta{font-size:10.5px;color:var(--text3);margin-top:1px}
+.juz-mag-row{display:flex;align-items:center;gap:10px;padding:.5rem .9rem;border-bottom:1px solid var(--gray-l);transition:background .12s}
+.juz-mag-row:last-child{border-bottom:none}
+.juz-mag-row:hover{background:var(--gray-l)}
+.juz-mag-row:hover .juz-mag-actions{opacity:1}
+.juz-mag-name{flex:1;font-size:12px;color:var(--text2);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.juz-cond-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:9px;background:var(--gray-l);color:var(--text3);border:1px solid var(--gray-b);text-transform:uppercase;letter-spacing:.03em;flex-shrink:0}
+.juz-enc-chip{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;padding:0 8px;border-radius:11px;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.02em;flex-shrink:0}
+.juz-enc-chip.vacio{background:var(--gray-b)!important;color:var(--text4)}
+.juz-mag-actions{display:flex;gap:2px;opacity:0;transition:opacity .12s;flex-shrink:0}
+.juz-mag-actions button{width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--text4);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.juz-mag-actions button:hover{background:var(--gray-b);color:var(--text)}
+.juz-mag-actions button.del:hover{background:var(--red-l);color:var(--red)}
+.juz-chip-mini{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:15px;padding:0 4px;border-radius:7px;color:#fff;font-size:9px;font-weight:700}
+.juz-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.juz-field label{font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.juz-field input,.juz-field select{padding:8px 11px;border-radius:var(--r);border:1px solid var(--gray-b);font-size:12.5px;font-family:var(--font);outline:none}
+.juz-field input:focus,.juz-field select:focus{border-color:var(--blue)}
+.juz-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
 </head>
 <body>
@@ -730,6 +765,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
     <div class="tnav" onclick="switchTab('audiencias',this)">Próximas audiencias</div>
     <div class="tnav" onclick="switchTab('gestion',this)">Tareas de Gestión</div>
     <div class="tnav" onclick="switchTab('paralegal',this)">Panel Paralegal</div>
+    <div class="tnav" onclick="switchTab('juzgados',this)">⚖ Juzgados</div>
     <div class="tnav" id="tnavAdmin" style="display:none" onclick="switchTab('admin',this)">⚙ Admin</div>
   </nav>
   <div class="tb-right">
@@ -2072,6 +2108,81 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
 
 </div>
 
+<!-- TAB JUZGADOS / MAGISTRADOS -->
+<div id="tab-juzgados" class="tab-content">
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+    <div style="font-size:15px;font-weight:700">⚖ Juzgados y Magistrados</div>
+    <span style="font-size:11.5px;color:var(--text4)">quién de Gestión impulsa/visita cada juzgado — se completa entre todos</span>
+  </div>
+
+  <div class="juz-stats" id="juz-stats-row"></div>
+
+  <div class="juz-filterbar">
+    <input type="text" id="juz-search" placeholder="🔍 Buscar distrito, juzgado, órgano o magistrado..." oninput="renderJuzgados()">
+    <select class="sel-inp" id="juz-f-distrito" onchange="renderJuzgados()"><option value="">Todos los distritos</option></select>
+    <select class="sel-inp" id="juz-f-tipo" onchange="renderJuzgados()"><option value="">Todos los tipos</option></select>
+    <select class="sel-inp" id="juz-f-encargado" onchange="renderJuzgados()"><option value="">Todos los encargados</option></select>
+    <span class="count-lbl" id="juz-count">—</span>
+    <button class="btn btn-dark" style="margin-left:auto" onclick="abrirModalJuzgado()">+ Agregar magistrado</button>
+  </div>
+
+  <div id="juz-container"></div>
+
+</div>
+
+<!-- MODAL AGREGAR/EDITAR MAGISTRADO -->
+<div class="overlay" id="modalJuzgado" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal" style="width:480px">
+    <div class="modal-title" id="juz-modal-title">Agregar magistrado</div>
+    <div class="modal-sub">Esta información se guarda en línea y la ven los 8 usuarios del portal.</div>
+    <input type="hidden" id="juz-edit-id">
+    <div class="juz-form-row">
+      <div class="juz-field">
+        <label>Distrito</label>
+        <input type="text" id="juz-distrito" list="juz-dl-distrito" placeholder="Ej. LIMA">
+        <datalist id="juz-dl-distrito"></datalist>
+      </div>
+      <div class="juz-field">
+        <label>Tipo de juzgado</label>
+        <input type="text" id="juz-tipo" list="juz-dl-tipo" placeholder="Ej. JUZGADO LABORAL">
+        <datalist id="juz-dl-tipo"></datalist>
+      </div>
+    </div>
+    <div class="juz-field">
+      <label>Órgano jurisdiccional</label>
+      <input type="text" id="juz-organo" list="juz-dl-organo" placeholder="Ej. 5° JUZGADO ESPECIALIZADO DE TRABAJO">
+      <datalist id="juz-dl-organo"></datalist>
+    </div>
+    <div class="juz-field">
+      <label>Magistrado (nombre y apellido)</label>
+      <input type="text" id="juz-magistrado" placeholder="Ej. PEREZ GOMEZ JUAN CARLOS">
+    </div>
+    <div class="juz-form-row">
+      <div class="juz-field">
+        <label>Condición</label>
+        <select id="juz-condicion">
+          <option value="">— Sin dato —</option>
+          <option value="TITULAR">Titular</option>
+          <option value="PROVISIONAL">Provisional</option>
+          <option value="SUPERNUMERARIO">Supernumerario</option>
+          <option value="PERMANENTE">Permanente</option>
+        </select>
+      </div>
+      <div class="juz-field">
+        <label>Encargado de gestión</label>
+        <input type="text" id="juz-encargado" list="juz-dl-encargado" placeholder="Iniciales, ej. RMR">
+        <datalist id="juz-dl-encargado"></datalist>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="juz-btn-borrar" style="display:none;color:var(--red);border-color:var(--red-b);background:var(--red-l);margin-right:auto" onclick="borrarJuzgadoModal()">🗑 Eliminar</button>
+      <button class="btn" onclick="document.getElementById('modalJuzgado').classList.remove('show')">Cancelar</button>
+      <button class="btn btn-dark" onclick="guardarJuzgadoModal()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TAB ADMIN — solo visible para el/los administrador(es) de la plataforma -->
 <div id="tab-admin" class="tab-content">
 
@@ -2356,12 +2467,13 @@ document.addEventListener('keydown', function(e){
 // Cuando cambian llaves en Firestore (por este usuario u otro), refrescamos
 // solo las vistas afectadas para que la sincronización se sienta "en vivo".
 function onKVKeysChanged(keys){
-  let needGestion=false, needFav=false, needPP=false, needData=false;
+  let needGestion=false, needFav=false, needPP=false, needData=false, needJuz=false;
   keys.forEach(k=>{
     if(k.indexOf('tareasGestion')===0 || k.indexOf('tgOverrides')===0 || k.indexOf('ptarea_')===0 || k.indexOf('dili_notas_')===0 || k.indexOf('obs_proc_')===0) needGestion=true;
     if(k.indexOf('fav_')===0) needFav=true;
     if(k.indexOf('pp_all')===0) needPP=true;
     if(k.indexOf('xdata_')===0) needData=true;
+    if(k.indexOf('juzgados_data')===0) needJuz=true;
   });
   // Si cambiaron los datos del Excel publicados por quien los carga, y no fui yo
   // quien los acaba de generar localmente (ya los tengo en memoria), los recibo.
@@ -2374,6 +2486,9 @@ function onKVKeysChanged(keys){
   try{ if(needFav && typeof renderFavoritos==='function') renderFavoritos(); }catch(e){}
   try{ if(needPP && typeof renderParalegal==='function') renderParalegal(); }catch(e){}
   try{ if(needPP && typeof renderAdminAuditList==='function') renderAdminAuditList(); }catch(e){}
+  try{ if(needJuz && typeof renderJuzgados==='function') renderJuzgados(); }catch(e){}
+  try{ if(needJuz && typeof render==='function' && activeTab==='reporte') render(); }catch(e){}
+  try{ if(needJuz && typeof renderAud==='function' && activeTab==='audiencias') renderAud(); }catch(e){}
 }
 
 // Llamado por el script type="module" cuando Firebase detecta sesión iniciada/cerrada.
@@ -2424,6 +2539,7 @@ window.__onAuthStateChanged = function(user){
     try{ if(typeof renderGestion==='function') renderGestion(); }catch(e){}
     try{ if(typeof renderFavoritos==='function') renderFavoritos(); }catch(e){}
     try{ if(typeof renderParalegal==='function') renderParalegal(); }catch(e){}
+    try{ if(typeof renderJuzgados==='function') renderJuzgados(); }catch(e){}
   }).catch(err=>{
     console.error('Error cargando datos de Firestore', err);
     if(loading) loading.classList.remove('show');
@@ -2773,7 +2889,7 @@ function render(){
         +getGestionBadge(r.id)
         +getFavBadge(r.id)
         +'<td style="max-width:58px;overflow:hidden;text-overflow:ellipsis"><a class="id-link" href="https://vinatea.mybig.com.ar/trabajos/overview/'+r.id+'/" target="_blank" title="Ver en MyBiG #'+r.id+'" onclick="logVistaExterna('+r.id+')">'+r.id+'</a></td>'
-        +tdT(r.cliente,240,'td-p')+tdT(r.contraparte,200,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdT(r.organo,185,'td-d')+(r.alertLectura
+        +tdT(r.cliente,240,'td-p')+tdT(r.contraparte,200,'td-d')+'<td class="td-m" title="'+esc(r.expediente)+'">'+esc(r.expediente)+'</td>'+tdT(r.supervisor,95)+tdT(r.responsable,105)+tdT(r.especialista,130,'td-d')+tdOrgano(r.organo,185,'td-d')+(r.alertLectura
   ? '<td style="max-width:160px"><div class="alert-lectura-badge"><span>⚠</span>INCONSISTENCIA</div><div style="font-size:10.5px;color:var(--text3);margin-top:3px" title="'+esc(r.bitacora)+'">'+esc(r.bitacora.length>28?r.bitacora.slice(0,28)+'…':r.bitacora)+'</div></td>'
   : tdT(r.bitacora,160,'td-d'))+'<td style="line-height:1.7">'+tarea+'</td><td style="max-width:175px;line-height:1.7">'+dili+'</td>'
         +'<td style="text-align:center">'+diasSinDili+'</td>'
@@ -2874,7 +2990,7 @@ function renderAud(){
       +'<td class="col-ext td-d" style="font-size:10.5px">'+esc(r.pacto)+'</td>'
       +'<td class="col-ext td-d" style="font-size:11px">'+esc((r.especialista||'').slice(0,16))+'</td>'
       +'<td class="col-ext td-d" style="font-size:11px">'+esc((r.distrito||'').slice(0,18))+'</td>'
-      +tdT(r.organo,175,'td-d')
+      +tdOrgano(r.organo,175,'td-d')
       +'<td class="col-ext td-d" style="font-size:11px">'+esc((r.bitacora||'').slice(0,24)+(r.bitacora&&r.bitacora.length>24?'…':''))+'</td>'
       +'<td><span class="badge b-a">'+esc(r.proxDiligencia)+'</span></td>'
       +'<td><strong style="color:var(--amber)">'+esc(r.proxDiliFecha)+'</strong>'+(r.proxDiliHora?' <span style="color:var(--text3);font-size:11px">'+esc(r.proxDiliHora)+'</span>':'')+'</td>'
@@ -2941,7 +3057,7 @@ function renderSens(){
       +'<td class="td-d" style="font-size:10.5px">'+esc(r.pacto)+'</td>'
       +tdT(r.especialista,130,'td-d')
       +tdT(r.distrito,140,'td-d')
-      +tdT(r.organo,185,'td-d')
+      +tdOrgano(r.organo,185,'td-d')
       +tdT(r.bitacora,200,'td-d')
       +'<td style="line-height:1.7">'+tarea+'</td>'
       +'<td style="max-width:175px;line-height:1.7">'+dili+'</td>'
@@ -3031,6 +3147,7 @@ function switchTab(name,el){
   if(name==='sensibles')  renderSens();
   if(name==='gestion')    renderGestion();
   if(name==='paralegal')  renderParalegal();
+  if(name==='juzgados')   renderJuzgados();
   if(name==='admin')      renderAdmin();
   if(typeof addResizeHandles==='function') setTimeout(addResizeHandles,100);
 }
@@ -6138,6 +6255,230 @@ function toggleFav(id){
 
 // Los 5 integrantes del equipo de Gestión que pueden recibir favoritos asignados.
 const GESTION_FAV_USERS = ['Roberto Matallana','Carlos Morales','Arturo Trelles','Silvia Maldonado','Juan Jose Edquen'];
+
+const JUZGADOS_SEED = [["LIMA", "CORTE SUPREMA", "SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL PERMANENTE", "CALDERON PUERTAS CARLOS ALBERTO", "TITULAR", "RMR"], ["LIMA", "CORTE SUPREMA", "SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL PERMANENTE", "ESPINOZA ORTIZ GABINO ALFREDO", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL PERMANENTE", "GROSSMANN CASAS ELIZABETH", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL PERMANENTE", "ALVAREZ OLAZABAL ELVIRA MARIA", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL PERMANENTE", "LINARES SAN ROMAN JUAN JOSE", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "1° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "FIGUEROA NAVARRO ALDO MARTIN", "TITULAR", ""], ["LIMA", "CORTE SUPREMA", "1° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "PROAÑO CUEVA CESAR AUGUSTO", "TITULAR", ""], ["LIMA", "CORTE SUPREMA", "1° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "RODRIGUEZ CHAVEZ DIANA LILY", "PROVISIONAL", "ATG"], ["LIMA", "CORTE SUPREMA", "1° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "TOLEDO TORIBIO OMAR", "PROVISIONAL", "SMO"], ["LIMA", "CORTE SUPREMA", "1° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "DÁVILA BRONCANO  ROSA LILIANA", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "2° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "ARÉVALO VELA JAVIER", "TITULAR", "RMR"], ["LIMA", "CORTE SUPREMA", "2° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "PAREDES INFANZÓN JELIO", "PROVISIONAL", "ATG"], ["LIMA", "CORTE SUPREMA", "2° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "PINARES SILVA DE TORRE MIRIAM HELLY", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "2° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "ATO ALVARADO MARTIN EDUARDO", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "2° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "ESPINOZA MONTOYA CECILIA LEONOR", "PROVISIONAL", "ATG"], ["LIMA", "CORTE SUPREMA", "3° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "RUEDA FERNÁNDEZ SILVIA CONSUELO", "PROVISIONAL", "ATG"], ["LIMA", "CORTE SUPREMA", "3° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "RUIDÍAS FARFÁN AUGUSTO", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "3° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "TORRES GAMARRA ABRAHAN PERCY", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "3° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "MANZO VILLANUEVA JOSÉ", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "3° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "ZUÑIGA HERRERA ELICEA INÉS", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "4° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "CASTILLO LEON VICTOR ANTONIO", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "4° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "RUBIO ZEBALLOS RUFO ISAAC", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "4° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "YALAN LEAL JACKELINE", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "4° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "CHIU PARDO WILSON ALEJANDRO", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "4° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "ÁVILA HUAMÁN NEIL ERWIN", "PROVISIONAL", ""], ["LIMA", "CORTE SUPREMA", "5° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "YAYA ZUMAETA ULISES AUGUSTO", "TITULAR", "RMR"], ["LIMA", "CORTE SUPREMA", "5° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "BUSTAMANTE DEL CASTILLO WILBER", "TITULAR", ""], ["LIMA", "CORTE SUPREMA", "5° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "DELGADO AYBAR YENNY MARGOT", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "5° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "TOVAR BUENDIA HILDA MARTINA ROSARIO", "PROVISIONAL", "RMR"], ["LIMA", "CORTE SUPREMA", "5° SALA SUPREMA DE DERECHO CONSTITUCIONAL Y SOCIAL TRANSITORIA", "GUTIERREZ REMON LUIS ABIGAEL", "PROVISIONAL", "RMR"], ["LIMA", "SALA LABORAL", "1° SALA  LABORAL", "CESPEDES CABALA DORIS MIRTHA (T)", "TITULAR", "RMR"], ["LIMA", "SALA LABORAL", "1° SALA  LABORAL", "BURGOS ZAVALETA JOSE MARTIN (P)", "PROVISIONAL", "RMR"], ["LIMA", "SALA LABORAL", "1° SALA  LABORAL", "BARBOZA LUDEÑA, MAXIMO SAUL (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL", "2° SALA LABORAL", "URBANO MENACHO ALEXANDER ARTURO (T)", "TITULAR", "RMR"], ["LIMA", "SALA LABORAL", "2° SALA LABORAL", "FUENTES LOBATO CIRO LUSMAN (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL", "2° SALA LABORAL", "CASTILLO  LUNA LUIS MANUEL (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL", "3° SALA LABORAL", "ARAUJO SANCHEZ ELIANA ELDER (T)", "TITULAR", "RMR"], ["LIMA", "SALA LABORAL", "3° SALA LABORAL", "CARDENAS ALVARADO BORIS FAUSTO (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL", "3° SALA LABORAL", "FIGUEROA MENDOZA YESENIA (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL", "4° SALA LABORAL", "BEGAZO VILLEGAS VELIA ODALIS (T) - SMO", "TITULAR", "SMO"], ["LIMA", "SALA LABORAL", "4° SALA LABORAL", "ALMEIDA CARDENAS NORA EUSEBIA (P) - SMO", "PROVISIONAL", "RMR"], ["LIMA", "SALA LABORAL", "4° SALA LABORAL", "SULCA QUISPE MARIO ELOY (P) - SMO", "PROVISIONAL", "SMO"], ["LIMA", "SALA LABORAL", "7° SALA LABORAL", "GOMEZ CARBAJAL ALICIA MARGARITA (T)", "TITULAR", "SMO"], ["LIMA", "SALA LABORAL", "7° SALA LABORAL", "HUATUCO SOTO ROLANDO JOSE (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL", "7° SALA LABORAL", "CHAVEZ PAUCAR JUAN CARLOS (P)", "PROVISIONAL", "CMP"], ["LIMA", "SALA LABORAL", "8° SALA LABORAL", "YANGALI IPARRAGUIRRE GINO ERNESTO (T)", "TITULAR", "RMR"], ["LIMA", "SALA LABORAL", "8° SALA LABORAL", "GONZALEZ SALCEDO FAUSTO VICTORIO MARTIN (P)", "PROVISIONAL", "ATG"], ["LIMA", "SALA LABORAL", "8° SALA LABORAL", "SERPA VERGARA ROSA ADRIANA (P)", "PROVISIONAL", "RMR"], ["LIMA", "SALA LABORAL CONTENCIOSO", "5° SALA LABORAL", "ESPINOZA LOPEZ OSWALDO CESAR (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "5° SALA LABORAL", "IRRAZABAL NUÑEZ WILSON LUIS (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "5° SALA LABORAL", "ENCINAS LLANOS ROSARIO DEL PILAR (P)", "PROVISIONAL", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "6° SALA LABORAL", "CHAVEZ CORNEJO MARCIAL MISAEL (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "6° SALA LABORAL", "QUILCA MOLINA MARTHA ROCIO (T)", "TITULAR", "CMP"], ["LIMA", "SALA LABORAL CONTENCIOSO", "6° SALA LABORAL", "CASTRO HIDALGO SEGUNDO ORE DE LA ROSA (P)", "PROVISIONAL", "ATG"], ["LIMA", "SALA LABORAL CONTENCIOSO", "9° SALA LABORAL", "CARLOS CASAS ELISA VILMA (T)", "TITULAR", "ATG"], ["LIMA", "SALA LABORAL CONTENCIOSO", "9° SALA LABORAL", "VALENZUELA BARRETO JULIO DONALD (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "9° SALA LABORAL", "VASCONES RUIZ SONIA NÉRIDA (T)", "TITULAR", "RMR"], ["LIMA", "SALA LABORAL CONTENCIOSO", "10° SALA LABORAL", "TAVARA MARTINEZ ZOILA ALICIA (T)", "TITULAR", "SMO"], ["LIMA", "SALA LABORAL CONTENCIOSO", "10° SALA LABORAL", "CARDENAS SALCEDO ANGELA GRACIELA (T)", "TITULAR", ""], ["LIMA", "SALA LABORAL CONTENCIOSO", "10° SALA LABORAL", "SOLANO CHUMPITAZ GULLERMO VICENTE (P)", "PROVISIONAL", "SMO"], ["LIMA ESTE", "SALA  LABORAL", "SALA LABORAL", "DIAZ CAÑOTE MIGUEL ANGEL (P)", "PROVISIONAL", "ATG"], ["LIMA ESTE", "SALA  LABORAL", "SALA LABORAL", "SANDRA VANESSA ALARCON GUERRA (T)", "TITULAR", "RMR"], ["LIMA ESTE", "SALA  LABORAL", "SALA LABORAL", "PARRA RIVERA DE GONZALES ROSE MARY (T)", "TITULAR", "CMP"], ["LIMA SUR", "SALA  LABORAL", "SALA  LABORAL TRANSITORIA", "FLORES ARRASCUE VICENTE FERRER (T)", "TITULAR", "SMO"], ["LIMA SUR", "SALA  LABORAL", "SALA  LABORAL TRANSITORIA", "ESPINOZA ASTO NELLY NANCY (P)", "PROVISIONAL", "SMO"], ["LIMA SUR", "SALA  LABORAL", "SALA  LABORAL TRANSITORIA", "MONTOYA NUÑEZ ALDO ROBERTO (P)", "PROVISIONAL", ""], ["LIMA NORTE", "SALA  LABORAL", "SALA  LABORAL", "LEON FLORIAN FELIPE JOHAN (T)", "TITULAR", ""], ["LIMA NORTE", "SALA  LABORAL", "SALA  LABORAL", "CATACORA VILLASANTE ROSA MARIA (T)", "TITULAR", ""], ["LIMA NORTE", "SALA  LABORAL", "SALA  LABORAL", "HUERTA RIOS HILDA JULIA (P)", "PROVISIONAL", ""], ["PUENTE PIEDRA - VENTANILLA", "SALA  LABORAL", "SALA LABORAL", "PENDIENTE (T)", "TITULAR", ""], ["PUENTE PIEDRA - VENTANILLA", "SALA  LABORAL", "SALA LABORAL", "CAMPOS MURILLO WALTER EDUARDO (T)", "TITULAR", ""], ["PUENTE PIEDRA - VENTANILLA", "SALA  LABORAL", "SALA LABORAL", "ORDOÑEZ ZAVALA MIRYAM ROSEMARIE (P)", "PROVISIONAL", ""], ["CALLAO", "SALA  LABORAL", "1° SALA  LABORAL", "GUERRERO ROLDAN DE SEDANO FLOR AURORA (T)", "TITULAR", ""], ["CALLAO", "SALA  LABORAL", "1° SALA  LABORAL", "CARMEN CHOQUEHUANCA NANCYO (T)", "TITULAR", ""], ["CALLAO", "SALA  LABORAL", "1° SALA  LABORAL", "PRAVIA GUERRERO JUAN CARLOS (P)", "PROVISIONAL", "CMP"], ["CALLAO", "SALA  LABORAL", "2° SALA LABORAL", "RAMAL BARRENECHEA ENRIQUE FERNANDO (T)", "TITULAR", "ATG"], ["CALLAO", "SALA  LABORAL", "2° SALA LABORAL", "MIRAVAL FLORES ALFREDO (T)", "TITULAR", ""], ["CALLAO", "SALA  LABORAL", "2° SALA LABORAL", "CLAVIJO ARRAIZA MARIA MAGDALENA (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO", "ESPINOZA HUETE KETTY NOEMI (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO", "CANALES VIDAL JULIO HEYNER (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "3° JUZGADO DE TRABAJO", "NACARINO PEREZ MARIO SERGIO (T)", "TITULAR", "RMR"], ["LIMA", "JUZGADO LABORAL", "4° JUZGADO DE TRABAJO", "CONDORI SUCARI RUTH IVONNE (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL", "5° JUZGADO DE TRABAJO", "LOCK GALLEGOS JUAN CARLOS (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "6° JUZGADO DE TRABAJO", "AQUIJE OSORIO PATRICIA IVETTE (P)", "PERMANENTE", "SMO"], ["LIMA", "JUZGADO LABORAL", "7° JUZGADO DE TRABAJO", "SALAZAR CHAVESTA EDGARDO ALBERTOS (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "8° JUZGADO DE TRABAJO", "APARI CHILQUILLO SEMIRA NALINI (P)", "PERMANENTE", "CMP"], ["LIMA", "JUZGADO LABORAL", "9° JUZGADO DE TRABAJO", "ELCORROVARRUTIA RIERA, ALFONSO CARLOS (P)", "PERMANENTE", "CMP"], ["LIMA", "JUZGADO LABORAL", "10° JUZGADO DE TRABAJO", "ANAYA BORDA CARLOS CLAUDIO (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "11° JUZGADO DE TRABAJO", "RAMOS RIVERA ANGEL TOMAS (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "12° JUZGADO DE TRABAJO", "CARRION NIN FRIDA MARGARITA (P)", "PERMANENTE", "CMP"], ["LIMA", "JUZGADO LABORAL", "13° JUZGADO DE TRABAJO", "BECERRA ATAUCONCHA KEYSI KALONDY (T)", "TITULAR", "ATG"], ["LIMA", "JUZGADO LABORAL", "14° JUZGADO DE TRABAJO", "ALAMO VELIZ NORMA ELIZABETH (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL", "15° JUZGADO DE TRABAJO", "ARIZABAL CALDERON RUSSY ELDA (P)", "PERMANENTE", "CMP"], ["LIMA", "JUZGADO LABORAL", "16° JUZGADO DE TRABAJO", "ALARCON SANDOVAL CARLOS ANAXIMANDRO (T)", "TITULAR", "RMR"], ["LIMA", "JUZGADO LABORAL", "17° JUZGADO DE TRABAJO", "AGUILAR BAZAN MARLY YOHANA (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "18° JUZGADO DE TRABAJO", "SANCHEZ BARDALES ELVIRA  (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO LABORAL", "19° JUZGADODE TRABAJO", "SACHA FLORES KARELY EDITH (P)", "PERMANENTE", "SMO"], ["LIMA", "JUZGADO LABORAL", "20° JUZGADO DE TRABAJO", "AYALA HIDALGO YADIRA ELENA (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL", "21° JUZGADO DE TRABAJO", "VILCHEZ TAPIA MARIA ANGELA (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL", "22° JUZGADO DE TRABAJO", "PEREZ SOLORZANO JESSICA YESSENIA (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL", "38° JUZGADO DE TRABAJO", "ASCARZA LOPEZ ZULEMA (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO LABORAL", "39° JUZGADO DE TRABAJO", "GASTULO CHAVEZ SILVIA JEANETTE (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "23º JUZGADO DE TRABAJO", "HUARSOCCA CANTEÑO SOLINA ANTONIA (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "24º JUZGADO DE TRABAJO", "CUMPA MORENO PATRICIA MERCEDES (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "25° JUZGADO DE TRABAJO", "OSORIO VALLADARES MERY (S)", "SUPERNUMERARIO", "ATG"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "26º JUZGADO DE TRABAJO", "ARANA CARDENAS MANUEL JESUS (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "27º JUZGADO DE TRABAJO", "CORDOVA FORERO ROSA LUZ LITA (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "28º JUZGADO DE TRABAJO", "AURIS AUCCACUSI FERNANDO (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "29º JUZGADO DE TRABAJO", "GARCIA ROMAN DELCY MARICELA (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "30º JUZGADO DE TRABAJO", "MEDINA SAYRA TANIA LIZETT (P)", "PERMANENTE", ""], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "31º JUZGADO DE TRABAJO", "CUNYAS ZAMORA YANIRA GEETA (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "32º JUZGADO DE TRABAJO", "SOTELO SEGURA RENATO FRANCISCO (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "33º JUZGADO DE TRABAJO", "VELIZ SOTO JONATHAN VICENTE (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "34° JUZGADO DE TRABAJO", "TAXA MARCOS ENRIQUE ARTURO (T)", "TITULAR", "ATG"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "35° JUZGADO DE TRABAJO", "LEON PILCO RORIC REY (T)", "TITULAR", "ATG"], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "36° JUZGADO DE TRABAJO", "PENDIENTE", "PERMANENTE", ""], ["LIMA", "JUZGADO LABORAL CONTENCIOSO", "37° JUZGADO DE TRABAJO", "SALDAÑA HAMADA ORLANDO ENRIQUE (T)", "TITULAR", ""], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "1° JUZGADO DE TRABAJO TRANSITORIO", "PADILLA VELA YESSICA LILIANA (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "2° JUZGADO DE TRABAJO TRANSITORIO", "TAFUR ROMERO ERICK HENDERSON (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "3° JUZGADO DE TRABAJO TRANSITORIO", "SANCHEZ MORI PERCY ABEL (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "4° JUZGADO DE TRABAJO TRANSITORIO", "BULEJE RAMIREZ JAIME NAZARIO (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "5° JUZGADO DE TRABAJO TRANSITORIO", "MAYHUA PONCE, FREDDY WILLIAM (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "6° JUZGADO DE TRABAJO TRANSITORIO", "VASQUEZ ALVARADO MILAGROS VERONICA (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "7° JUZGADO DE TRABAJO TRANSITORIO", "TABOADA ROSAZZA KATHERYNE ELENA (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "17° JUZGADO DE TRABAJO TRANSITORIO", "AQUINO QUINTANA YONY CESAR (S)", "SUPERNUMERARIO", "ATG"], ["LIMA", "JUZGADO LABORAL TRANSITORIO", "25° JUZGADO DE TRABAJO TRANSITORIO", "CESPEDES ESPINOZA RAMON EDUARDO (S)", "SUPERNUMERARIO", "SMO"], ["LIMA ESTE", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO - ZONA 01, 02 Y 03", "ALTOS BARRETO NICEFORO (P)", "PERMANENTE", "CMP"], ["LIMA ESTE", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO - ZONA 01", "SOTO ZEVALLOS MARIA STEPHANY (P)", "PERMANENTE", "SMO"], ["LIMA ESTE", "JUZGADO LABORAL", "3° JUZGADO DE TRABAJO - ZONA 01", "PONCE RAMOS DORA LUCELINA (T)", "TITULAR", "SMO"], ["LIMA ESTE", "JUZGADO LABORAL", "JUZGADO DE TRABAJO - ZONA 02", "TELLO PEREZ MARINO ROBERTO (P)", "PERMANENTE", "CMP"], ["LIMA ESTE", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO - ZONA 03", "SILVA ORMEÑO MIGUEL ANGEL (T)", "TITULAR", "CMP"], ["LIMA ESTE", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO - ZONA 03", "ARRIOLA GUILLEN MARCELA (P)", "PERMANENTE", "CMP"], ["LIMA ESTE", "JUZGADO LABORAL TRANSITORIO", "JUZGADO DE TRABAJO TRANSITORIO", "VARGAS PEREZ ROSA ISABEL (P)", "PERMANENTE", "CMP"], ["LIMA SUR", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO", "ATAO HUAMAN DAYAN MEISHU (S)", "SUPERNUMERARIO", ""], ["LIMA SUR", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO", "MANSILLA TUDELA JENNIFER LINDSAY (T)", "TITULAR", "SMO"], ["LIMA SUR", "JUZGADO LABORAL", "3° JUZGADO DE TRABAJO", "PAZ CHURA PAMELA PAOLA (P)", "PERMANENTE", ""], ["LIMA SUR", "JUZGADO LABORAL", "4° JUZGADO DE TRABAJO", "CRUZADO ECHEVARRIA JOSE ALFREDO (P)", "PERMANENTE", ""], ["LIMA NORTE", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO", "CARDENAS ROSAS MAGALI MYRIAM (T)", "TITULAR", "CMP"], ["LIMA NORTE", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO", "ALVARADO ROMERO LUIS ALBERTO (T)", "TITULAR", ""], ["LIMA NORTE", "JUZGADO LABORAL", "3° JUZGADO DE TRABAJO", "CARRASCO ROJAS ADI ROSARIO (P)", "PERMANENTE", ""], ["LIMA NORTE", "JUZGADO LABORAL", "4° JUZGADO DE TRABAJO", "PAZ QUISPE WALTER HILDEBRANDO (S)", "SUPERNUMERARIO", ""], ["LIMA NORTE", "JUZGADO LABORAL", "5° JUZGADO DE TRABAJO", "VILLAIZAN PEZO ERNESTO (P)", "PERMANENTE", "CMP"], ["LIMA NORTE", "JUZGADO LABORAL TRANSITORIO", "2° JUZGADO DE TRABAJO TRANSITORIO", "VILLAIZAN PEZO ERNESTO (P)", "PERMANENTE", ""], ["PUENTE PIEDRA - VENTANILLA", "JUZGADO DE TRABAJO", "JUZGADO DE TRABAJO", "POMA ALOSILLA NARDA KATHERINE (T)", "TITULAR", "SMO"], ["CALLAO", "JUZGADO LABORAL", "1° JUZGADO DE TRABAJO", "ECHEGARAY CANALES CARLOS ALBERTO (T)", "TITULAR", "RMR"], ["CALLAO", "JUZGADO LABORAL", "2° JUZGADO DE TRABAJO", "SOUZA FARFAN SABY CARMEN (T)", "TITULAR", "SMO"], ["CALLAO", "JUZGADO LABORAL", "3° JUZGADO DE TRABAJO", "PENDIENTE (S)", "SUPERNUMERARIO", ""], ["CALLAO", "JUZGADO LABORAL", "4° JUZGADO DE TRABAJO", "GONZALES ZURITA WILLIAM ENRIQUE (T)", "TITULAR", ""], ["CALLAO", "JUZGADO LABORAL", "5° JUZGADO DE TRABAJO", "VALVERDE BERNALES JHONATAN (T)", "TITULAR", "SMO"], ["CALLAO", "JUZGADO LABORAL", "6° JUZGADO DE TRABAJO", "SANCHEZ TARAZONA ESTHER BETTY (S)", "SUPERNUMERARIO", ""], ["CALLAO", "JUZGADO LABORAL TRANSITORIO", "2° JUZGADO DE TRABAJO TRANSITORIO", "GONZALEZ CARRASCO LINDA EVA ANGELA (S)", "SUPERNUMERARIO", "ATG"], ["LIMA", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO - LABORAL", "IVONNE DEL CARMEN MATOS SÁNCHEZ (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO - LABORAL", "GRAJEDA BASHUALDO MILAGROS MARILYN (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "3º JUZGADO DE PAZ LETRADO - LABORAL", "MORAN MIGUEL HAROLD CRISTIAN (T)", "TITULAR", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO - LABORAL", "CABREJO DELGADO MAGALY SOLEDAD (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "5° JUZGADO DE PAZ LETRADO - LABORAL", "PUCHO CARBAJAL RAQUEL BETTY (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "6º JUZGADO DE PAZ LETRADO - LABORAL", "MACEDO NOLORVE KARINA NATALY (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "7° JUZGADO DE PAZ LETRADO - LABORAL", "BUSTAMANTE VERA ISABELLA NIKOLE (S)", "SUPERNUMERARIO", "SMO"], ["LIMA", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL - SEDE BARRANCO Y MIRAFLORES", "OCSA LAURA NORMA (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL - SEDE BARRANCO Y MIRAFLORES", "ACOSTA TIRADO MANUEL YSIDRO (T)", "TITULAR", "CMP"], ["LIMA", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL - SURCO, SAN BORJA Y SURQUILLO", "ARENAS SOTO SHEILA ETHEL (T)", "TITULAR", ""], ["LIMA", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL - SURCO, SAN BORJA Y SURQUILLO", "GAONA ARANA LADY MAGALY (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO DE PAZ LETRADO", "3° JUZGADO DE PAZ LETRADO  LABORAL - SURCO, SAN BORJA Y SURQUILLO", "SILVA SANTISTEBAN VALDIVIA MARCO ANTONIO LEO (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO  LABORAL - SURCO, SAN BORJA Y SURQUILLO", "ESTELA VERA ISRRAEL MANFREDO (S)", "SUPERNUMERARIO", ""], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL - ZONA 02", "LEON RICALDI ROCIO DEL PILAR (S)", "SUPERNUMERARIO", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL - ZONA 02", "CONGA HUARCAYA MARIA (S)", "SUPERNUMERARIO", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "3° JUZGADO DE PAZ LETRADO LABORAL - ZONA 02", "SEDANO GUERRERO ROBERT WAGNER (S)", "SUPERNUMERARIO", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO LABORAL - ZONA 02", "ORCCOTOMA ANTAY ELIZABETH (S)", "SUPERNUMERARIO", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL - ZONA 03", "FERRUZO MONTALVAN YEF (T)", "TITULAR", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL - ZONA 03", "QUISPE TAPAHUASCO JOSE PERCY (T)", "TITULAR", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "3° JUZGADO DE PAZ LETRADO LABORAL - ZONA 03", "JURADO MONTEAGUDO YSABEL (T)", "TITULAR", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL - ZONA 01", "CARRERA VENTOCILLA JUNIORS ANTOBELLI (T)", "TITULAR", "CMP"], ["LIMA ESTE", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL - ZONA 01", "DIAZ BARBOZA REGINA (S)", "SUPERNUMERARIO", ""], ["LIMA SUR", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL", "LOAYZA FLORES LOURDES FLORA (S)", "SUPERNUMERARIO", ""], ["LIMA SUR", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL", "HUAMANI LEYVA CARLOS HERMINIO (T)", "TITULAR", "SMO"], ["LIMA SUR", "JUZGADO DE PAZ LETRADO", "3° JUZGADO DE PAZ LETRADO LABORAL", "BERNALES MENDOZA MARIELLA ELIZABETH (S)", "SUPERNUMERARIO", ""], ["LIMA SUR", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO LABORAL", "ZAPANA CORONADO CINDY ROCIO (S)", "SUPERNUMERARIO", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO CIVIL Y LABORAL", "CARDENAS PORTUGAL JANIDETH VICTORIA (T)", "TITULAR", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO CIVIL Y LABORAL", "JIMENEZ SANCHEZ RUTH (S)", "SUPERNUMERARIO", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO CIVIL Y LABORAL", "VICENTE MILLA CARMEN VERONICA (T)", "TITULAR", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL", "VASQUEZ ROSALES KAROL (T)", "TITULAR", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL", "ZAPATA PACCORI NOELIA LISBET (T)", "TITULAR", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "3° JUZGADO DE PAZ LETRADO LABORAL", "CORREA SILVA BILLS ANDERSSON (S)", "SUPERNUMERARIO", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "4° JUZGADO DE PAZ LETRADO LABORAL", "CHAMBI QUISPE JIMMY GODOFREDO (S)", "SUPERNUMERARIO", ""], ["LIMA NORTE", "JUZGADO DE PAZ LETRADO", "5° JUZGADO DE PAZ LETRADO LABORAL", "ALCOCER GALLO SHIRLEY FRANCIS (T)", "TITULAR", ""], ["PUENTE PIEDRA - VENTANILLA", "JUZGADO DE PAZ LETRADO", "JUZGADO DE PAZ LETRADO", "PINEDO MENDOZA AMELIA BETTINA (S)", "SUPERNUMERARIO", ""], ["CALLAO", "JUZGADO DE PAZ LETRADO", "1° JUZGADO DE PAZ LETRADO LABORAL", "PENDIENTE (P)", "PERMANENTE", ""], ["CALLAO", "JUZGADO DE PAZ LETRADO", "2° JUZGADO DE PAZ LETRADO LABORAL", "GARCIA QUEVEDO MAX RAFAEL (S)", "SUPERNUMERARIO", ""], ["LIMA", "SALA CONSTITUCIONAL", "1° SALA CONSTITUCIONAL", "TAPIA GONZALES ANDRES FORTUNATO (P)", "PERMANENTE", "RMR"], ["LIMA", "SALA CONSTITUCIONAL", "1° SALA CONSTITUCIONAL", "PENDIENTE", "PERMANENTE", ""], ["LIMA", "SALA CONSTITUCIONAL", "1° SALA CONSTITUCIONAL", "CUEVA CHAUCA BACILIO LUCIANO (T)", "TITULAR", "RMR"], ["LIMA", "SALA CONSTITUCIONAL", "2° SALA CONSTITUCIONAL", "VILCHEZ DAVILA ROBERTO (T)", "TITULAR", ""], ["LIMA", "SALA CONSTITUCIONAL", "2° SALA CONSTITUCIONAL", "ROMERO ROCA EDUARDO ARMANDO (T)", "TITULAR", ""], ["LIMA", "SALA CONSTITUCIONAL", "2° SALA CONSTITUCIONAL", "SUAREZ BURGOS DAVID (P)", "PROVISIONAL", ""], ["LIMA", "SALA CONSTITUCIONAL", "3° SALA CONSTITUCIONAL", "PAREDES FLORES NESTOR FERNANDO (T)", "TITULAR", "CMP"], ["LIMA", "SALA CONSTITUCIONAL", "3° SALA CONSTITUCIONAL", "VELARDE ACOSTA JOSE LUIS (P)", "PROVISIONAL", "RMR"], ["LIMA", "SALA CONSTITUCIONAL", "3° SALA CONSTITUCIONAL", "CABRERA GIURISICH IVAN ALFREDO (P)", "PROVISIONAL", "RMR"], ["LIMA", "JUZGADO CONSTITUCIONAL", "1° JUZGADO CONSTITUCIONAL", "NUÑEZ MATOS JUAN CARLOS (S)", "SUPERNUMERARIO", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "2° JUZGADO CONSTITUCIONAL", "VALENCIA LOPEZ JONATHAN JORGE (T)", "TITULAR", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "3° JUZGADO CONSTITUCIONAL", "PAREDES SALAS JOHN JAVIER (T)", "TITULAR", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "4° JUZGADO CONSTITUCIONAL", "TELLO DIAZ GUILLERMINA DELIA (P)", "PERMANENTE", "ATG"], ["LIMA", "JUZGADO CONSTITUCIONAL", "5° JUZGADO CONSTITUCIONAL", "RAMIREZ NINO DE GUZMAN JORGE LUIS (P)", "PERMANENTE", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "6° JUZGADO CONSTITUCIONAL", "TARRILLO  MENESES JACQUELINE ROSANNA (S)", "SUPERNUMERARIO", "CMP"], ["LIMA", "JUZGADO CONSTITUCIONAL", "7° JUZGADO CONSTITUCIONAL", "SALDANA VILLAVICENCIO MALBINA (T)", "TITULAR", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "9° JUZGADO CONSTITUCIONAL", "TORRES TASSO JUAN FIDEL (T)", "TITULAR", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "10° JUZGADO CONSTITUCIONAL", "GRANADOS MANZANEDA HUGO JURGEN (P)", "PERMANENTE", ""], ["LIMA", "JUZGADO CONSTITUCIONAL", "11° JUZGADO CONSTITUCIONAL", "NUNEZ RIVA SILVIA YSABEL (T)", "TITULAR", "ATG"]];
+
+// ── Lógica Juzgados / Magistrados (apartado editable y en línea) ──
+const ENCARGADO_COLORS = {ATG:'#2563eb',CMP:'#16a34a',RMR:'#dc2626',SMO:'#7c3aed'};
+function colorEncargado(enc){
+  if(!enc) return '#9ca3af';
+  if(ENCARGADO_COLORS[enc]) return ENCARGADO_COLORS[enc];
+  // color determinístico para encargados nuevos que no estén en el mapa fijo
+  let h=0; for(let i=0;i<enc.length;i++) h=(h*31+enc.charCodeAt(i))>>>0;
+  const palette=['#0891b2','#ea580c','#4338ca','#be185d','#65a30d'];
+  return palette[h%palette.length];
+}
+function normOrgano(s){ return (s||'').toString().trim().toUpperCase().replace(/\s+/g,' '); }
+
+function getJuzgados(){
+  let arr=null;
+  try{ const raw=FSLS.getItem('juzgados_data'); if(raw) arr=JSON.parse(raw); }catch(e){}
+  if(!arr||!arr.length){
+    arr = JUZGADOS_SEED.map((r,i)=>({id:'jz_'+(i+1),distrito:r[0],tipoJuzgado:r[1],organo:r[2],magistrado:r[3],condicion:r[4],encargado:r[5]||''}));
+    try{ FSLS.setItem('juzgados_data', JSON.stringify(arr)); }catch(e){}
+  }
+  return arr;
+}
+function saveJuzgados(arr){
+  FSLS.setItem('juzgados_data', JSON.stringify(arr));
+}
+
+// Encargados (iniciales) vinculados al órgano jurisdiccional de un proceso —
+// usado para el cruce automático en Reporte Total / Audiencias / Sensibles.
+function encargadosPorOrgano(organo){
+  const key=normOrgano(organo);
+  if(!key) return [];
+  const set=new Set();
+  getJuzgados().forEach(j=>{ if(normOrgano(j.organo)===key && j.encargado) set.add(j.encargado); });
+  return Array.from(set).sort();
+}
+function chipsEncargados(organo){
+  const encs=encargadosPorOrgano(organo);
+  if(!encs.length) return '';
+  return '<div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap">'+encs.map(e=>
+    '<span class="juz-chip-mini" style="background:'+colorEncargado(e)+'" title="Encargado de gestión de este juzgado: '+esc(e)+'">'+esc(e)+'</span>'
+  ).join('')+'</div>';
+}
+function tdOrgano(v,w,c){
+  return '<td'+(c?' class="'+c+'"':'')+(w?' style="max-width:'+w+'px"':'')+' title="'+esc(v)+'"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(v)+'</div>'+chipsEncargados(v)+'</td>';
+}
+
+function renderJuzgados(){
+  const container=document.getElementById('juz-container');
+  if(!container) return;
+  const arr=getJuzgados();
+
+  // Poblar selects de filtro (solo si están vacíos, para no perder la selección activa)
+  const selDist=document.getElementById('juz-f-distrito');
+  const selTipo=document.getElementById('juz-f-tipo');
+  const selEnc =document.getElementById('juz-f-encargado');
+  if(selDist && selDist.options.length<=1){
+    const dists=Array.from(new Set(arr.map(j=>j.distrito).filter(Boolean))).sort();
+    selDist.innerHTML='<option value="">Todos los distritos</option>'+dists.map(d=>'<option>'+esc(d)+'</option>').join('');
+  }
+  if(selTipo && selTipo.options.length<=1){
+    const tipos=Array.from(new Set(arr.map(j=>j.tipoJuzgado).filter(Boolean))).sort();
+    selTipo.innerHTML='<option value="">Todos los tipos</option>'+tipos.map(t=>'<option>'+esc(t)+'</option>').join('');
+  }
+  if(selEnc && selEnc.options.length<=1){
+    const encs=Array.from(new Set(arr.map(j=>j.encargado).filter(Boolean))).sort();
+    selEnc.innerHTML='<option value="">Todos los encargados</option>'+encs.map(e=>'<option>'+esc(e)+'</option>').join('')+'<option value="__sin__">Sin encargado</option>';
+  }
+
+  // Stats
+  const porEnc={};
+  let sinEnc=0;
+  arr.forEach(j=>{
+    if(j.encargado){ porEnc[j.encargado]=(porEnc[j.encargado]||0)+1; }
+    else sinEnc++;
+  });
+  const organosUnicos=new Set(arr.map(j=>normOrgano(j.organo))).size;
+  const statsRow=document.getElementById('juz-stats-row');
+  if(statsRow){
+    let html='';
+    html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:#64748b"></div><div><div class="juz-stat-val">'+arr.length+'</div><div class="juz-stat-lbl">Magistrados</div></div></div>';
+    html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:#64748b"></div><div><div class="juz-stat-val">'+organosUnicos+'</div><div class="juz-stat-lbl">Órganos/juzgados</div></div></div>';
+    Object.keys(porEnc).sort().forEach(e=>{
+      html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:'+colorEncargado(e)+'"></div><div><div class="juz-stat-val">'+porEnc[e]+'</div><div class="juz-stat-lbl">'+esc(e)+'</div></div></div>';
+    });
+    html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:var(--gray-b)"></div><div><div class="juz-stat-val">'+sinEnc+'</div><div class="juz-stat-lbl">Sin asignar</div></div></div>';
+    statsRow.innerHTML=html;
+  }
+
+  // Filtros
+  const q=(document.getElementById('juz-search')||{}).value||'';
+  const qn=q.toLowerCase().trim();
+  const fDist=(document.getElementById('juz-f-distrito')||{}).value||'';
+  const fTipo=(document.getElementById('juz-f-tipo')||{}).value||'';
+  const fEnc =(document.getElementById('juz-f-encargado')||{}).value||'';
+  let rows=arr.filter(j=>{
+    if(fDist && j.distrito!==fDist) return false;
+    if(fTipo && j.tipoJuzgado!==fTipo) return false;
+    if(fEnc==='__sin__' && j.encargado) return false;
+    if(fEnc && fEnc!=='__sin__' && j.encargado!==fEnc) return false;
+    if(qn && !((j.distrito||'')+(j.tipoJuzgado||'')+(j.organo||'')+(j.magistrado||'')+(j.encargado||'')).toLowerCase().includes(qn)) return false;
+    return true;
+  });
+
+  const cnt=document.getElementById('juz-count');
+  if(cnt) cnt.textContent=rows.length.toLocaleString()+' magistrado'+(rows.length!==1?'s':'');
+
+  if(!rows.length){
+    container.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text4);font-size:13px"><div style="font-size:40px;margin-bottom:.75rem">⚖</div>Sin resultados para este filtro.</div>';
+    return;
+  }
+
+  // Agrupar: Distrito → Órgano (manteniendo el tipo de juzgado como metadato del grupo)
+  const porDistrito={};
+  rows.forEach(j=>{
+    const d=j.distrito||'— Sin distrito';
+    if(!porDistrito[d]) porDistrito[d]={};
+    const o=j.organo||'— Sin órgano';
+    if(!porDistrito[d][o]) porDistrito[d][o]={tipo:j.tipoJuzgado||'', items:[]};
+    porDistrito[d][o].items.push(j);
+  });
+
+  let html='';
+  Object.keys(porDistrito).sort().forEach(dist=>{
+    html+='<div class="juz-dist-head">📍 '+esc(dist)+'</div>';
+    const organos=porDistrito[dist];
+    Object.keys(organos).sort().forEach(org=>{
+      const grupo=organos[org];
+      html+='<div class="juz-org-card">';
+      html+='<div class="juz-org-head"><div><div class="juz-org-name">'+esc(org)+'</div><div class="juz-org-meta">'+esc(grupo.tipo)+' · '+grupo.items.length+' magistrado'+(grupo.items.length!==1?'s':'')+'</div></div>'
+        +'<button class="btn-sm" onclick="abrirModalJuzgado(null,'+JSON.stringify(org)+','+JSON.stringify(dist)+','+JSON.stringify(grupo.tipo)+')">+ Magistrado</button></div>';
+      grupo.items.forEach(j=>{
+        const encColor=j.encargado?colorEncargado(j.encargado):null;
+        html+='<div class="juz-mag-row">'
+          +'<div class="juz-mag-name" title="'+esc(j.magistrado)+'">'+esc(j.magistrado||'—')+'</div>'
+          +(j.condicion?'<span class="juz-cond-badge">'+esc(j.condicion)+'</span>':'')
+          +'<span class="juz-enc-chip'+(j.encargado?'':' vacio')+'" style="'+(encColor?'background:'+encColor:'')+'">'+(j.encargado?esc(j.encargado):'—')+'</span>'
+          +'<div class="juz-mag-actions"><button title="Editar" onclick="abrirModalJuzgado('+JSON.stringify(j.id)+')">✎</button><button class="del" title="Eliminar" onclick="borrarJuzgado('+JSON.stringify(j.id)+')">✕</button></div>'
+          +'</div>';
+      });
+      html+='</div>';
+    });
+  });
+  container.innerHTML=html;
+}
+
+function abrirModalJuzgado(id, organoPre, distritoPre, tipoPre){
+  const arr=getJuzgados();
+  const distritos=Array.from(new Set(arr.map(j=>j.distrito).filter(Boolean))).sort();
+  const tipos=Array.from(new Set(arr.map(j=>j.tipoJuzgado).filter(Boolean))).sort();
+  const organos=Array.from(new Set(arr.map(j=>j.organo).filter(Boolean))).sort();
+  const encargados=Array.from(new Set(arr.map(j=>j.encargado).filter(Boolean))).sort();
+  document.getElementById('juz-dl-distrito').innerHTML=distritos.map(d=>'<option value="'+esc(d)+'">').join('');
+  document.getElementById('juz-dl-tipo').innerHTML=tipos.map(t=>'<option value="'+esc(t)+'">').join('');
+  document.getElementById('juz-dl-organo').innerHTML=organos.map(o=>'<option value="'+esc(o)+'">').join('');
+  document.getElementById('juz-dl-encargado').innerHTML=['ATG','CMP','RMR','SMO'].concat(encargados).filter((v,i,a)=>a.indexOf(v)===i).map(e=>'<option value="'+esc(e)+'">').join('');
+
+  const btnBorrar=document.getElementById('juz-btn-borrar');
+  if(id){
+    const row=arr.find(j=>j.id===id);
+    if(!row) return;
+    document.getElementById('juz-modal-title').textContent='Editar magistrado';
+    document.getElementById('juz-edit-id').value=id;
+    document.getElementById('juz-distrito').value=row.distrito||'';
+    document.getElementById('juz-tipo').value=row.tipoJuzgado||'';
+    document.getElementById('juz-organo').value=row.organo||'';
+    document.getElementById('juz-magistrado').value=row.magistrado||'';
+    document.getElementById('juz-condicion').value=row.condicion||'';
+    document.getElementById('juz-encargado').value=row.encargado||'';
+    if(btnBorrar) btnBorrar.style.display='';
+  }else{
+    document.getElementById('juz-modal-title').textContent='Agregar magistrado';
+    document.getElementById('juz-edit-id').value='';
+    document.getElementById('juz-distrito').value=distritoPre||'';
+    document.getElementById('juz-tipo').value=tipoPre||'';
+    document.getElementById('juz-organo').value=organoPre||'';
+    document.getElementById('juz-magistrado').value='';
+    document.getElementById('juz-condicion').value='';
+    document.getElementById('juz-encargado').value='';
+    if(btnBorrar) btnBorrar.style.display='none';
+  }
+  document.getElementById('modalJuzgado').classList.add('show');
+}
+
+function guardarJuzgadoModal(){
+  const id=document.getElementById('juz-edit-id').value;
+  const distrito=(document.getElementById('juz-distrito').value||'').trim().toUpperCase();
+  const tipoJuzgado=(document.getElementById('juz-tipo').value||'').trim().toUpperCase();
+  const organo=(document.getElementById('juz-organo').value||'').trim().toUpperCase();
+  const magistrado=(document.getElementById('juz-magistrado').value||'').trim().toUpperCase();
+  const condicion=document.getElementById('juz-condicion').value||'';
+  const encargado=(document.getElementById('juz-encargado').value||'').trim().toUpperCase();
+  if(!organo||!magistrado){ showToast('⚠ Completa al menos el órgano y el magistrado'); return; }
+  const arr=getJuzgados();
+  if(id){
+    const idx=arr.findIndex(j=>j.id===id);
+    if(idx>-1) arr[idx]={...arr[idx],distrito,tipoJuzgado,organo,magistrado,condicion,encargado};
+  }else{
+    arr.push({id:'jz_'+Date.now()+'_'+Math.floor(Math.random()*1000),distrito,tipoJuzgado,organo,magistrado,condicion,encargado});
+  }
+  saveJuzgados(arr);
+  document.getElementById('modalJuzgado').classList.remove('show');
+  renderJuzgados();
+  render(); renderAud(); renderSens();
+  showToast('💾 Guardado');
+}
+
+function borrarJuzgado(id){
+  if(!confirm('¿Eliminar este magistrado del listado de Juzgados?')) return;
+  const arr=getJuzgados().filter(j=>j.id!==id);
+  saveJuzgados(arr);
+  renderJuzgados();
+  render(); renderAud(); renderSens();
+  showToast('🗑 Eliminado');
+}
+function borrarJuzgadoModal(){
+  const id=document.getElementById('juz-edit-id').value;
+  if(!id) return;
+  document.getElementById('modalJuzgado').classList.remove('show');
+  borrarJuzgado(id);
+}
+
+
 
 // Si quien tiene la sesión iniciada es uno de los 5 del equipo de Gestión, se le
 // preselecciona automáticamente en el modal de "¿A quién se asigna?" (puede
