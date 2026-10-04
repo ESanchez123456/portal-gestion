@@ -766,7 +766,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
     <div class="tnav active" onclick="switchTab('reporte',this)">Reporte total</div>
     <div class="tnav" onclick="switchTab('audiencias',this)">Próximas audiencias</div>
     <div class="tnav" onclick="switchTab('gestion',this)">Tareas de Gestión</div>
-    <div class="tnav" onclick="switchTab('paralegal',this)">Panel Paralegal</div>
+    <div class="tnav" id="tnavParalegal" style="display:none" onclick="switchTab('paralegal',this)">Panel Paralegal</div>
     <div class="tnav" onclick="switchTab('juzgados',this)">⚖ Juzgados</div>
     <div class="tnav" id="tnavAdmin" style="display:none" onclick="switchTab('admin',this)">⚙ Admin</div>
   </nav>
@@ -2585,6 +2585,10 @@ window.__onAuthStateChanged = function(user){
   const tnavAdmin = document.getElementById('tnavAdmin');
   if(tnavAdmin) tnavAdmin.style.display = esAdmin() ? '' : 'none';
 
+  // Solo el/los administrador(es) ven la pestaña Panel Paralegal.
+  const tnavParalegal = document.getElementById('tnavParalegal');
+  if(tnavParalegal) tnavParalegal.style.display = esAdmin() ? '' : 'none';
+
   if(loading) loading.classList.add('show');
   window.__fbLoadAllKV().then(()=>{
     if(gate) gate.classList.add('hidden');
@@ -3852,23 +3856,57 @@ function renderAdminKeyBrowser(){
   if(!body) return;
   const q = (document.getElementById('admin-keys-search')?.value||'').toLowerCase().trim();
   const cache = window.__KV_CACHE || {};
-  const keys = Object.keys(cache).filter(k=>!q||k.toLowerCase().includes(q)).sort();
+  const allKeys = Object.keys(cache);
+
+  // Las xdata_chunk_N son solo trozos del Excel procesado (JSON cortado cada
+  // 300.000 caracteres) — verlas una por una es ruido ilegible y borrar una
+  // sola corrompe los datos del equipo. Se agrupan en una sola fila resumen.
+  const chunkKeys  = allKeys.filter(k=>/^xdata_chunk_\d+$/.test(k));
+  const otherKeys  = allKeys.filter(k=>!/^xdata_chunk_\d+$/.test(k));
+
+  let rows = otherKeys.map(k=>({key:k, size:(cache[k]||'').length, preview:(cache[k]||''), grupo:false}));
+  if(chunkKeys.length){
+    const totalSize = chunkKeys.reduce((s,k)=>s+(cache[k]||'').length,0);
+    rows.push({
+      key: 'xdata_chunk_* — Excel procesado',
+      size: totalSize,
+      preview: chunkKeys.length+' parte(s) · Reporte Total + Tareas del último Excel cargado',
+      grupo: true
+    });
+  }
+
+  rows = rows.filter(r=>!q||r.key.toLowerCase().includes(q)).sort((a,b)=>a.key.localeCompare(b.key));
+
   const cnt = document.getElementById('admin-keys-count');
-  if(cnt) cnt.textContent = keys.length.toLocaleString()+' claves en Firestore';
-  if(!keys.length){
+  if(cnt) cnt.textContent = rows.length.toLocaleString()+' clave'+(rows.length!==1?'s':'')+' en Firestore'+(chunkKeys.length?' ('+chunkKeys.length+' partes de Excel agrupadas en 1)':'');
+  if(!rows.length){
     body.innerHTML = '<tr><td colspan="4" style="padding:1rem;color:var(--text4)">Sin resultados</td></tr>';
     return;
   }
-  body.innerHTML = keys.map(k=>{
-    const raw = cache[k]||'';
-    const preview = (raw.length>90 ? raw.slice(0,90)+'…' : raw).replace(/</g,'&lt;');
-    return '<tr style="border-top:1px solid var(--gray-b)">'+
-      '<td style="padding:6px 8px;font-family:monospace;font-size:10.5px">'+k.replace(/</g,'&lt;')+'</td>'+
-      '<td style="padding:6px 8px;color:var(--text3);white-space:nowrap">'+raw.length.toLocaleString()+' car.</td>'+
+  body.innerHTML = rows.map(r=>{
+    const preview = (r.preview.length>90 ? r.preview.slice(0,90)+'…' : r.preview).replace(/</g,'&lt;');
+    const delAction = r.grupo ? 'eliminarChunksExcel()' : ('eliminarKVIndividual(\''+r.key.replace(/'/g,"\\'")+'\')');
+    return '<tr style="border-top:1px solid var(--gray-b)'+(r.grupo?';background:var(--gray-l)':'')+'">'+
+      '<td style="padding:6px 8px;font-family:monospace;font-size:10.5px">'+(r.grupo?'📊 ':'')+r.key.replace(/</g,'&lt;')+'</td>'+
+      '<td style="padding:6px 8px;color:var(--text3);white-space:nowrap">'+r.size.toLocaleString()+' car.</td>'+
       '<td style="padding:6px 8px;color:var(--text3);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+preview+'</td>'+
-      '<td style="padding:6px 8px;text-align:right"><button class="btn" style="font-size:10px;padding:3px 8px;color:var(--red);border-color:var(--red-b)" onclick="eliminarKVIndividual(\''+k.replace(/'/g,"\\'")+'\')">🗑</button></td>'+
+      '<td style="padding:6px 8px;text-align:right"><button class="btn" style="font-size:10px;padding:3px 8px;color:var(--red);border-color:var(--red-b)" onclick="'+delAction+'" title="'+(r.grupo?'Elimina TODAS las partes del Excel guardado':'Eliminar esta clave')+'">🗑</button></td>'+
       '</tr>';
   }).join('');
+}
+
+function eliminarChunksExcel(){
+  const cache = window.__KV_CACHE || {};
+  const chunkKeys = Object.keys(cache).filter(k=>/^xdata_chunk_\d+$/.test(k));
+  if(!chunkKeys.length){ showToast('No hay datos de Excel guardados en línea'); return; }
+  if(!confirm('¿Eliminar los datos del Excel guardados en línea ('+chunkKeys.length+' parte(s))?\n\nEsto borra el Reporte Total y Tareas para TODO el equipo hasta que alguien vuelva a cargar el Excel. No se puede deshacer.')) return;
+  chunkKeys.forEach(k=>FSLS.removeItem(k));
+  showToast('✓ Datos del Excel eliminados ('+chunkKeys.length+' parte(s))');
+  renderAdminKeyBrowser();
+  try{ renderGestion(); }catch(e){}
+  try{ renderPlanner(); }catch(e){}
+  try{ renderFavoritos(); }catch(e){}
+  try{ renderParalegal(); }catch(e){}
 }
 
 function vaciarGrupoKV(matcher, label){
