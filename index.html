@@ -837,11 +837,16 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
   <div class="modal">
     <div class="modal-title">Cargar datos desde Excel</div>
     <div class="modal-sub">Carga el Reporte total y el Reporte de Tareas exportados desde MyBiG. Los datos se procesan en el navegador — ningún archivo se sube a internet.</div>
+    <div style="background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r);padding:9px 12px;margin-bottom:.9rem;font-size:12px;line-height:1.6;color:var(--text2,inherit)">
+      <strong>¿Qué reportes adjuntar?</strong><br>
+      📊 <strong>Reporte Total</strong>: el que MyBiG envía todos los días por correo.<br>
+      📋 <strong>Reporte de Tareas</strong>: se descarga desde MyBiG → <a href="https://vinatea.mybig.com.ar/informes/view/7624/" target="_blank" rel="noopener" style="font-weight:600">V&amp;T - Reporte Diario de Tareas</a>.
+    </div>
     <div class="dz-label"><span>📊</span> Reporte Total</div>
     <div class="drop-zone" id="dz1" onclick="document.getElementById('f1').click()" ondragover="dzOver(event,'dz1')" ondragleave="dzOut('dz1')" ondrop="dzDrop(event,'dz1','rt')">
       <span>↓</span>
       <div class="dz-t">Arrastra aquí o haz clic para seleccionar</div>
-      <div class="dz-s">.xlsx — Reporte total de procesos de MyBiG</div>
+      <div class="dz-s">.xlsx — Reporte Total que MyBiG envía todos los días por correo</div>
     </div>
     <div id="st1"></div>
     <input type="file" id="f1" accept=".xlsx" style="display:none" onchange="loadFile(this,'rt','st1')">
@@ -849,7 +854,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
     <div class="drop-zone" id="dz2" onclick="document.getElementById('f2').click()" ondragover="dzOver(event,'dz2')" ondragleave="dzOut('dz2')" ondrop="dzDrop(event,'dz2','ta')">
       <span>☑</span>
       <div class="dz-t">Arrastra aquí o haz clic para seleccionar</div>
-      <div class="dz-s">.xlsx — Reporte de tareas de MyBiG</div>
+      <div class="dz-s">.xlsx — «V&amp;T - Reporte Diario de Tareas», se descarga desde MyBiG</div>
     </div>
     <div id="st2"></div>
     <input type="file" id="f2" accept=".xlsx" style="display:none" onchange="loadFile(this,'ta','st2')">
