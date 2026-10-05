@@ -2605,9 +2605,8 @@ window.__onAuthStateChanged = function(user){
     if(lblEnVivo) lblEnVivo.style.display = 'inline-flex';
     // Si alguien ya publicó un Excel procesado y yo no soy quien lo sube,
     // lo recibo automáticamente (no tengo que cargar nada manualmente).
-    if(!esUploaderAutorizado()){
-      try{ cargarDatosExcelDesdeKV(); }catch(e){ console.error('Error recibiendo datos del equipo', e); }
-    }
+    // (también el admin: así la data publicada no se pierde al recargar la página)
+    try{ cargarDatosExcelDesdeKV(); }catch(e){ console.error('Error recibiendo datos del equipo', e); }
     try{ if(typeof renderGestion==='function') renderGestion(); }catch(e){}
     try{ if(typeof renderFavoritos==='function') renderFavoritos(); }catch(e){}
     try{ if(typeof renderParalegal==='function') renderParalegal(); }catch(e){}
@@ -3524,6 +3523,9 @@ function procesarExcel(){
         }));
     })();
 
+    // Diligencias de TODOS los equipos (para la vista "Todos los equipos"), publicables a Firestore
+    window.DILIGENCIAS_EQUIPOS_EXCEL = construirDiligenciasEquipos(rawTA);
+
     // Última diligencia cumplida/cancelada por proceso (para calcular días sin diligencia)
     const taUltDili={};
     rawTA.forEach(r=>{
@@ -3716,6 +3718,7 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
   const lbl = document.getElementById('lbl-sem');
   if(lbl) lbl.textContent=(prefijoLabel||'Actualizado · ')+DATA.length.toLocaleString()+' procesos · '+TAREAS_GESTION_EXCEL.length+' tareas';
   render(); renderAud(); renderGestion();
+  try{ if(typeof renderEquipos==='function') renderEquipos(); }catch(e){}
 }
 
 // ══════════════ PUBLICAR / RECIBIR EL EXCEL PROCESADO VÍA FIRESTORE ══════════════
@@ -3958,7 +3961,8 @@ function publicarDatosExcelEnFirestore(){
     const payload = {
       DATA, TAREAS_GESTION_EXCEL, DILIGENCIAS_GESTION_EXCEL,
       SENTENCIAS_BY_ID: window.SENTENCIAS_BY_ID||{},
-      PLANNER_EXCEL_TAREAS: window.PLANNER_EXCEL_TAREAS||[]
+      PLANNER_EXCEL_TAREAS: window.PLANNER_EXCEL_TAREAS||[],
+      DILIGENCIAS_EQUIPOS_EXCEL: window.DILIGENCIAS_EQUIPOS_EXCEL||[]
     };
     const str = JSON.stringify(payload);
     const CHUNK = 300000;
@@ -4007,6 +4011,7 @@ function cargarDatosExcelDesdeKV(){
   DILIGENCIAS_GESTION_EXCEL = payload.DILIGENCIAS_GESTION_EXCEL || [];
   window.SENTENCIAS_BY_ID = payload.SENTENCIAS_BY_ID || {};
   window.PLANNER_EXCEL_TAREAS = payload.PLANNER_EXCEL_TAREAS || [];
+  window.DILIGENCIAS_EQUIPOS_EXCEL = payload.DILIGENCIAS_EQUIPOS_EXCEL || [];
 
   const fechaMeta = meta.uploadedAt ? new Date(meta.uploadedAt) : new Date();
   const quien = 'Actualizado el '+fmtFechaHora(fechaMeta)+' · ';
@@ -5426,33 +5431,63 @@ function abrirPlannerModal(key){
 }
 
 // ── TODOS LOS EQUIPOS ─────────────────────────────────────────
+function construirDiligenciasEquipos(rows){
+  const cl = v=>String(v==null?'':v).trim();
+  const fmt = v=>{
+    if(!v) return '';
+    if(v instanceof Date){ return String(v.getUTCDate()).padStart(2,'0')+'/'+String(v.getUTCMonth()+1).padStart(2,'0')+'/'+v.getUTCFullYear(); }
+    if(typeof v==='number'){ const d=new Date(Math.round((v-25569)*86400*1000)); return String(d.getUTCDate()).padStart(2,'0')+'/'+String(d.getUTCMonth()+1).padStart(2,'0')+'/'+d.getUTCFullYear(); }
+    const s=String(v).trim();
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)){ const p=s.slice(0,10).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+    return s.slice(0,10);
+  };
+  return (rows||[]).filter(r=>cl(r['tipo']).toUpperCase().startsWith('DILIGENCIA -')).map(r=>({
+    nrotarea: Number(r['nrotarea']||0),
+    supervisor: cl(r['supervisor']),
+    usuario: cl(r['usuario']),
+    cliente: cl(r['clientefacturable']||r['clienterepresentado']),
+    expediente: cl(r['expediente']),
+    tipo: cl(r['tipo']).replace(/^DILIGENCIA - /i,''),
+    fecha: fmt(r['fecha']),
+    hora: cl(r['hora']).slice(0,5),
+    estado: cl(r['estadotarea'])
+  }));
+}
+
 function renderEquipos(){
   const q      = (document.getElementById('eq-search')?.value||'').toLowerCase();
   const equipo = document.getElementById('eq-equipo')?.value||'';
   const desde  = document.getElementById('eq-fecha-desde')?.value||'';
   const hasta  = document.getElementById('eq-fecha-hasta')?.value||'';
 
-  // Usar rawTA (todas las diligencias de todos los equipos)
-  if(!rawTA||!rawTA.length){
+  // Fuente: diligencias publicadas por el admin (visibles para todo el equipo);
+  // si aún no existen pero el admin tiene el Excel en memoria, se calculan al vuelo.
+  let base = window.DILIGENCIAS_EQUIPOS_EXCEL;
+  if((!base||!base.length) && rawTA && rawTA.length) base = construirDiligenciasEquipos(rawTA);
+  if(!base||!base.length){
+    document.getElementById('eq-count').textContent = '0 diligencias';
     document.getElementById('eq-container').innerHTML =
-      '<div style="text-align:center;padding:3rem;color:var(--text4)">Carga el Excel de tareas para ver las diligencias de todos los equipos.</div>';
+      '<div style="text-align:center;padding:3rem;color:var(--text4)">Aún no hay diligencias publicadas. '+(esAdmin()?'Carga el Excel de tareas (Cargar Excel) para publicarlas a todo el equipo.':'El administrador debe cargar el Excel de tareas para que aparezcan aquí.')+'</div>';
     return;
   }
 
-  const fmtF = v=>{if(!v)return '';if(v instanceof Date){return String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+'/'+v.getFullYear();}const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}return s.slice(0,10);};
-  const cl = v=>String(v==null?'':v).trim();
+  // Completar el selector de equipos con los supervisores reales de la data
+  const selEq = document.getElementById('eq-equipo');
+  if(selEq){
+    const sups = [...new Set(base.map(r=>r.supervisor).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const actuales = [...selEq.options].map(o=>o.value).filter(Boolean);
+    if(sups.join('|') !== actuales.slice().sort((a,b)=>a.localeCompare(b)).join('|')){
+      const cur = selEq.value;
+      selEq.innerHTML = '<option value="">Todos los equipos</option>'+sups.map(s=>'<option>'+esc(s)+'</option>').join('');
+      selEq.value = sups.includes(cur) ? cur : '';
+    }
+  }
 
-  let dilis = rawTA.filter(r=>{
-    const tipo = cl(r['tipo']||'').toUpperCase();
-    if(!tipo.startsWith('DILIGENCIA -')) return false;
-    const sup  = cl(r['supervisor']||'');
-    const usr  = cl(r['usuario']||'');
-    const cli  = cl(r['clientefacturable']||r['clienterepresentado']||'');
-    const exp  = cl(r['expediente']||'');
-    if(equipo && sup!==equipo) return false;
-    if(q && !(cli+usr+exp).toLowerCase().includes(q)) return false;
-    const fd = fmtF(r['fecha']);
-    const fdSort = fd?fd.split('/').reverse().join('-'):'';
+  const sortKey = f=> f ? f.split('/').reverse().join('-') : '';
+  const dilis = base.filter(r=>{
+    if(equipo && r.supervisor!==equipo) return false;
+    if(q && !((r.cliente||'')+(r.usuario||'')+(r.expediente||'')).toLowerCase().includes(q)) return false;
+    const fdSort = sortKey(r.fecha);
     if(desde && fdSort<desde) return false;
     if(hasta && fdSort>hasta) return false;
     return true;
@@ -5460,12 +5495,10 @@ function renderEquipos(){
 
   document.getElementById('eq-count').textContent = dilis.length.toLocaleString()+' diligencias';
 
-  // Agrupar por supervisor
   const grupos = {};
   dilis.forEach(r=>{
-    const sup = cl(r['supervisor']||'Sin equipo');
-    if(!grupos[sup]) grupos[sup]=[];
-    grupos[sup].push(r);
+    const sup = r.supervisor||'Sin equipo';
+    (grupos[sup]=grupos[sup]||[]).push(r);
   });
 
   const container = document.getElementById('eq-container');
@@ -5475,27 +5508,16 @@ function renderEquipos(){
   }
 
   container.innerHTML = Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).map(([sup, rows])=>{
-    const filas = rows.sort((a,b)=>{
-      const fa=fmtF(a['fecha']).split('/').reverse().join('');
-      const fb=fmtF(b['fecha']).split('/').reverse().join('');
-      return fa.localeCompare(fb);
-    }).map(r=>{
-      const tipo  = cl(r['tipo']||'').replace('DILIGENCIA - ','');
-      const cli   = cl(r['clientefacturable']||r['clienterepresentado']||'—');
-      const exp   = cl(r['expediente']||'—');
-      const usr   = cl(r['usuario']||'—');
-      const fecha = fmtF(r['fecha']);
-      const hora  = cl(r['hora']||'');
-      const est   = cl(r['estadotarea']||'');
-      const nrt   = r['nrotarea']?Number(r['nrotarea']):0;
+    const filas = rows.sort((a,b)=>sortKey(a.fecha).localeCompare(sortKey(b.fecha))).map(r=>{
+      const est = r.estado||'';
       const estColor = est==='Pendiente'?'var(--amber)':est==='Cumplida'?'var(--green)':'var(--text4)';
       return '<tr>'
-        +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/tareas/'+nrt+'/edit/" target="_blank">#'+nrt+'</a></td>'
-        +'<td class="td-p" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+esc(cli)+'</td>'
-        +'<td class="td-m" style="font-size:10.5px">'+esc(exp)+'</td>'
-        +'<td style="font-size:11px">'+esc(tipo)+'</td>'
-        +'<td style="font-size:11px">'+esc(usr)+'</td>'
-        +'<td style="font-weight:600;color:var(--amber);white-space:nowrap">'+esc(fecha)+(hora?' '+esc(hora):'')+'</td>'
+        +'<td><a class="id-link" href="https://vinatea.mybig.com.ar/tareas/'+r.nrotarea+'/edit/" target="_blank">#'+r.nrotarea+'</a></td>'
+        +'<td class="td-p" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+esc(r.cliente||'—')+'</td>'
+        +'<td class="td-m" style="font-size:10.5px">'+esc(r.expediente||'—')+'</td>'
+        +'<td style="font-size:11px">'+esc(r.tipo)+'</td>'
+        +'<td style="font-size:11px">'+esc(r.usuario||'—')+'</td>'
+        +'<td style="font-weight:600;color:var(--amber);white-space:nowrap">'+esc(r.fecha)+(r.hora?' '+esc(r.hora):'')+'</td>'
         +'<td><span style="color:'+estColor+';font-size:10.5px;font-weight:600">'+esc(est)+'</span></td>'
         +'</tr>';
     }).join('');
