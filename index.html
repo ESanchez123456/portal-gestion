@@ -1458,6 +1458,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
             <th style="min-width:130px">Expediente</th>
             <th style="min-width:90px">Supervisor</th>
             <th style="min-width:85px">Instancia</th>
+            <th style="min-width:170px">Bitácora</th>
             <th style="min-width:210px">Tipo de tarea</th>
             <th style="min-width:115px">Asignado a</th>
             <th style="min-width:100px">Agendado por</th>
@@ -1485,6 +1486,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
             <th style="min-width:130px">Expediente</th>
             <th style="min-width:90px">Supervisor</th>
             <th style="min-width:85px">Instancia</th>
+            <th style="min-width:170px">Bitácora</th>
             <th style="min-width:210px">Tipo de tarea</th>
             <th style="min-width:115px">Asignado a</th>
             <th style="min-width:100px">Agendado por</th>
@@ -1707,6 +1709,7 @@ body.has-bulk-bar .pagination{margin-bottom:4.5rem}
           <option>Silvia Maldonado</option>
           <option>Talía León</option>
         </select>
+        <div id="ag-asig-hint" style="display:none;font-size:10.5px;color:var(--text3);margin-top:3px"></div>
       </div>
     </div>
     <div class="ag-form-row">
@@ -3636,6 +3639,7 @@ function procesarExcel(){
         instancia:  gc(r,['estadointerno'],['Estado Interno']),
         distrito:   gc(r,['distritoactual'],['Distrito Actual']),
         organo:     gc(r,['organojurisdiccional'],['Órgano Jurisdiccional','Organo Jurisdiccional']),
+        tipoJuzgado:gc(r,['tipojuzgado'],['Tipo de juzgado','Tipo Juzgado','Tipo de Juzgado']),
         especialista:gc(r,['especialistalegal'],['Especialista legal']),
         relevancia: gc(r,['relevancia'],['Relevancia']),
         pacto:      gc(r,['pacto'],['Pacto']),
@@ -3714,6 +3718,7 @@ function finalizarVistaDespuesDeCarga(prefijoLabel){
   if(typeof poblarFddRelevancia==='function')poblarFddRelevancia();
   if(typeof poblarFddCliente==='function')poblarFddCliente();
   if(typeof poblarFddBitacora==='function')poblarFddBitacora();
+  sincronizarJuzgadosConRT();
   if(typeof poblarFddClienteAud==='function')poblarFddClienteAud();
   if(typeof poblarFddOrgano==='function')poblarFddOrgano();
   if(typeof poblarFddOrganoAud==='function')poblarFddOrganoAud();
@@ -4228,6 +4233,7 @@ function buildTareaFila(t, clase){
   const proc = DATA.find(r=>r.id===t.nroId);
   const supervisor = proc?proc.supervisor:'—';
   const instancia  = proc?proc.instancia:'—';
+  const bitacora   = (proc&&proc.bitacora)||'—';
   const overrides  = JSON.parse(FSLS.getItem('tgOverrides')||'{}');
   const ov = overrides[t.id]||{};
   const cambios = [];
@@ -4257,6 +4263,7 @@ function buildTareaFila(t, clase){
     +'<td class="td-m" title="'+esc(t.expediente||'—')+'">'+esc(t.expediente||'—')+'</td>'
     +'<td class="td-d" style="font-size:11px">'+esc(supervisor)+'</td>'
     +'<td>'+instBadge(instancia)+'</td>'
+    +'<td class="td-d" style="font-size:11px" title="'+esc(bitacora)+'">'+esc(bitacora.slice(0,40)+(bitacora.length>40?'…':''))+'</td>'
     +'<td title="'+esc(t.tipo)+'">'+esc(t.tipo.replace('Gestión - ','').slice(0,35)+(t.tipo.length>40?'…':''))+'</td>'
     +'<td style="display:flex;align-items:center">'+dot+esc(t.asignado||'—')+'</td>'
     +'<td class="td-d" style="font-size:11px">'+esc(t.agendadoPor||'—')+'</td>'
@@ -4314,7 +4321,7 @@ function renderGestion(){
   const sliceExt = externas.slice((tgPage-1)*TG_PAGE, tgPage*TG_PAGE);
   document.getElementById('tg-tbody-ext').innerHTML = sliceExt.length
     ? sliceExt.map(t=>buildTareaFila(t,'tg-origen-ext')).join('')
-    : '<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--text4)">Sin tareas agendadas por equipos</td></tr>';
+    : '<tr><td colspan="16" style="text-align:center;padding:2rem;color:var(--text4)">Sin tareas agendadas por equipos</td></tr>';
   buildPag('tg-pg-ext-info','tg-pg-ext-btns',tgPage,tpExt,p=>{tgPage=p;renderGestion();});
 
   // Tabla internas
@@ -4323,7 +4330,7 @@ function renderGestion(){
   const sliceInt = internas.slice((tgPageInt-1)*TG_PAGE, tgPageInt*TG_PAGE);
   document.getElementById('tg-tbody-int').innerHTML = sliceInt.length
     ? sliceInt.map(t=>buildTareaFila(t,'tg-origen-int')).join('')
-    : '<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--text4)">Sin tareas autoagendadas por Gestión</td></tr>';
+    : '<tr><td colspan="16" style="text-align:center;padding:2rem;color:var(--text4)">Sin tareas autoagendadas por Gestión</td></tr>';
   buildPag('tg-pg-int-info','tg-pg-int-btns',tgPageInt,tpInt,p=>{tgPageInt=p;renderGestion();});
 
   setTimeout(addResizeHandles,0);
@@ -6647,6 +6654,121 @@ function encargadosPorOrgano(organo){
   getJuzgados().forEach(j=>{ if(normOrgano(j.organo)===key && j.encargado) set.add(j.encargado); });
   return Array.from(set).sort();
 }
+// Iniciales de encargado → persona del equipo de Gestión (para preseleccionar "Asignado a")
+const INICIALES_GESTION = {ATG:'Arturo Trelles',CMP:'Carlos Morales',RMR:'Roberto Matallana',SMO:'Silvia Maldonado'};
+// Persona de Gestión dueña de un órgano: la que más magistrados tiene a cargo en ese órgano.
+function gestionDuenoPorOrgano(organo){
+  const key=normOrgano(organo);
+  if(!key) return '';
+  const cnt={};
+  getJuzgados().forEach(j=>{ if(j.encargado && normOrgano(j.organo)===key){ cnt[j.encargado]=(cnt[j.encargado]||0)+1; } });
+  const top=Object.keys(cnt).filter(e=>INICIALES_GESTION[e]).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b))[0];
+  return top?INICIALES_GESTION[top]:'';
+}
+
+// ── Homologación de Juzgados con el Reporte Total (col. K órgano jurisdiccional, col. M tipo de juzgado) ──
+function _juzFamilia(n){
+  n=(n||'').toUpperCase();
+  if(/SALA SUPREMA/.test(n)) return 'supr';
+  if(/PAZ LETRADO/.test(n)) return 'paz';
+  if(/SALA/.test(n)) return 'sala';
+  if(/CONSTITUCIONAL/.test(n)) return 'const';
+  if(/TRABAJO|LABORAL/.test(n)) return 'trab';
+  return 'otro';
+}
+function _juzClave(distrito,organo){
+  const m=(organo||'').match(/^\s*(\d{1,3})/);
+  const fam=_juzFamilia(organo);
+  if(!m||fam==='otro') return '';
+  return normOrgano(distrito)+'|'+fam+'|'+(/TRANSITORI/i.test(organo)?'T':'P')+'|'+parseInt(m[1],10);
+}
+// Trae el nombre homologado y el tipo de juzgado del Reporte Total (solo admin escribe).
+//  - Lo editado a mano (editado:true) NUNCA se pisa.
+//  - Si el nombre ya coincide con el del reporte, solo se completa el tipo.
+//  - Si un registro del listado original equivale de forma inequívoca a un órgano del reporte
+//    (mismo distrito, familia, N° y permanente/transitorio) se renombra al nombre homologado.
+//  - Los órganos del reporte que no existen en el listado se agregan (sin magistrado) para poder asignarles encargado.
+function _juzEditado(j){
+  if(j.editado===true) return true;
+  if(j.deRT||j.rt) return false;       // ya viene del reporte y nadie lo editó
+  const m=/^jz_(\d+)$/.exec(j.id||'');
+  if(!m) return true;                  // agregado a mano
+  const sd=JUZGADOS_SEED[parseInt(m[1],10)-1];
+  if(!sd) return true;
+  // si difiere del listado original, alguien lo corrigió a mano antes de este cambio
+  return !(normOrgano(j.distrito)===normOrgano(sd[0]) && normOrgano(j.tipoJuzgado)===normOrgano(sd[1]) && normOrgano(j.organo)===normOrgano(sd[2]));
+}
+function sincronizarJuzgadosConRT(){
+  try{
+    if(!esAdmin() || !DATA || !DATA.length) return;
+    const ocultos=new Set(JSON.parse(FSLS.getItem('juzgados_rt_ocultos')||'[]'));
+    // Catálogo del reporte
+    const cat=new Map();
+    DATA.forEach(r=>{
+      const o=normOrgano(r.organo); if(!o) return;
+      const d=normOrgano(r.distrito);
+      const k=d+'||'+o;
+      let e=cat.get(k);
+      if(!e){ e={distrito:d,organo:o,n:0,tipos:{}}; cat.set(k,e); }
+      e.n++;
+      const t=(r.tipoJuzgado||'').toString().trim();
+      if(t) e.tipos[t]=(e.tipos[t]||0)+1;
+    });
+    cat.forEach(e=>{ e.tipo=Object.keys(e.tipos).sort((a,b)=>e.tipos[b]-e.tipos[a])[0]||''; });
+    const entries=Array.from(cat.values());
+    const arr=getJuzgados();
+    let changed=false;
+    const mismoDist=(a,b)=>!a||!b||normOrgano(a)===normOrgano(b);
+
+    // 1) Coincidencia exacta de nombre
+    const grupos=new Map(); // distrito|organo -> filas
+    arr.forEach(j=>{ const k=normOrgano(j.distrito)+'||'+normOrgano(j.organo); if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(j); });
+    entries.forEach(e=>{
+      const k=e.distrito+'||'+e.organo;
+      const rows=grupos.get(k);
+      if(rows&&rows.length){
+        e.usado=true;
+        rows.forEach(j=>{
+          if(_juzEditado(j)) return;
+          if(e.tipo && j.tipoJuzgado!==e.tipo){ j.tipoJuzgado=e.tipo; j.rt=true; changed=true; }
+        });
+      }
+    });
+    // 2) Renombrar registros del listado original con equivalente inequívoco
+    const claveSeed=new Map();
+    grupos.forEach((rows,k)=>{
+      const j0=rows[0];
+      if(rows.some(j=>_juzEditado(j)||j.deRT)) return;
+      const cl_=_juzClave(j0.distrito,j0.organo);
+      if(!cl_) return;
+      if(entries.some(e=>e.usado && e.distrito+'||'+e.organo===k)) return;
+      claveSeed.set(cl_,(claveSeed.get(cl_)||[]).concat([rows]));
+    });
+    claveSeed.forEach((lista,cl_)=>{
+      if(lista.length!==1) return; // ambiguo: varios del listado con la misma clave
+      const cands=entries.filter(e=>!e.usado && !/DESACTIVADO/.test(e.organo) && _juzClave(e.distrito,e.organo)===cl_)
+                         .sort((a,b)=>b.n-a.n);
+      if(!cands.length) return;
+      if(cands[1] && cands[1].n*2>cands[0].n) return; // ambiguo en el reporte
+      const e=cands[0];
+      lista[0].forEach(j=>{
+        j.organoOriginal=j.organoOriginal||j.organo;
+        j.organo=e.organo; j.rt=true;
+        if(e.tipo) j.tipoJuzgado=e.tipo;
+        changed=true;
+      });
+      e.usado=true;
+    });
+    // 3) Agregar los órganos del reporte que no están en el listado
+    entries.forEach(e=>{
+      if(e.usado || ocultos.has(e.distrito+'||'+e.organo)) return;
+      arr.push({id:'jz_rt_'+e.distrito.replace(/\W+/g,'').slice(0,12)+'_'+e.organo.replace(/\W+/g,'').slice(0,40),
+        distrito:e.distrito,tipoJuzgado:e.tipo,organo:e.organo,magistrado:'',condicion:'',encargado:'',deRT:true});
+      changed=true;
+    });
+    if(changed){ saveJuzgados(arr); try{ renderJuzgados(); }catch(e){} }
+  }catch(err){ console.error('sincronizarJuzgadosConRT',err); }
+}
 function chipsEncargados(organo){
   const encs=encargadosPorOrgano(organo);
   if(!encs.length) return '';
@@ -6691,7 +6813,7 @@ function renderJuzgados(){
   const statsRow=document.getElementById('juz-stats-row');
   if(statsRow){
     let html='';
-    html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:#64748b"></div><div><div class="juz-stat-val">'+arr.length+'</div><div class="juz-stat-lbl">Magistrados</div></div></div>';
+    html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:#64748b"></div><div><div class="juz-stat-val">'+arr.filter(j=>j.magistrado).length+'</div><div class="juz-stat-lbl">Magistrados</div></div></div>';
     html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:#64748b"></div><div><div class="juz-stat-val">'+organosUnicos+'</div><div class="juz-stat-lbl">Órganos/juzgados</div></div></div>';
     Object.keys(porEnc).sort().forEach(e=>{
       html+='<div class="juz-stat"><div class="juz-stat-dot" style="background:'+colorEncargado(e)+'"></div><div><div class="juz-stat-val">'+porEnc[e]+'</div><div class="juz-stat-lbl">'+esc(e)+'</div></div></div>';
@@ -6806,13 +6928,14 @@ function guardarJuzgadoModal(){
   const magistrado=(document.getElementById('juz-magistrado').value||'').trim().toUpperCase();
   const condicion=document.getElementById('juz-condicion').value||'';
   const encargado=(document.getElementById('juz-encargado').value||'').trim().toUpperCase();
-  if(!organo||!magistrado){ showToast('⚠ Completa al menos el órgano y el magistrado'); return; }
+  const _filaRT=id?getJuzgados().find(j=>j.id===id):null;
+  if(!organo||(!magistrado&&!(_filaRT&&_filaRT.deRT))){ showToast('⚠ Completa al menos el órgano y el magistrado'); return; }
   const arr=getJuzgados();
   if(id){
     const idx=arr.findIndex(j=>j.id===id);
-    if(idx>-1) arr[idx]={...arr[idx],distrito,tipoJuzgado,organo,magistrado,condicion,encargado};
+    if(idx>-1) arr[idx]={...arr[idx],distrito,tipoJuzgado,organo,magistrado,condicion,encargado,editado:true};
   }else{
-    arr.push({id:'jz_'+Date.now()+'_'+Math.floor(Math.random()*1000),distrito,tipoJuzgado,organo,magistrado,condicion,encargado});
+    arr.push({id:'jz_'+Date.now()+'_'+Math.floor(Math.random()*1000),distrito,tipoJuzgado,organo,magistrado,condicion,encargado,editado:true});
   }
   saveJuzgados(arr);
   document.getElementById('modalJuzgado').classList.remove('show');
@@ -6824,6 +6947,10 @@ function guardarJuzgadoModal(){
 function borrarJuzgado(id){
   if(!esAdmin()){ showToast('⚠ Solo el administrador puede eliminar juzgados'); return; }
   if(!confirm('¿Eliminar este magistrado del listado de Juzgados?')) return;
+  const _fila=getJuzgados().find(j=>j.id===id);
+  if(_fila && _fila.deRT){
+    try{ const o=JSON.parse(FSLS.getItem('juzgados_rt_ocultos')||'[]'); o.push(normOrgano(_fila.distrito)+'||'+normOrgano(_fila.organo)); FSLS.setItem('juzgados_rt_ocultos',JSON.stringify(o)); }catch(e){}
+  }
   const arr=getJuzgados().filter(j=>j.id!==id);
   saveJuzgados(arr);
   renderJuzgados();
@@ -7240,8 +7367,26 @@ function addResizeHandles(){
 // ── AGENDAR TAREA DESDE FILA ────────────────────────────────
 let agendarProcesoId = null;
 
+// Preselecciona en "Asignado a" a la persona de Gestión dueña del juzgado del proceso
+// (según el apartado Juzgados). Sigue siendo editable: se puede elegir a cualquier otra.
+function aplicarAsignadoPorJuzgado(proc){
+  const sel=document.getElementById('ag-asignado');
+  const hint=document.getElementById('ag-asig-hint');
+  if(hint){ hint.style.display='none'; hint.textContent=''; }
+  if(!sel||!proc) return;
+  const dueno=gestionDuenoPorOrgano(proc.organo);
+  if(dueno && Array.from(sel.options).some(o=>o.value===dueno||o.text===dueno)){
+    sel.value=dueno;
+    if(hint){ hint.textContent='Sugerido: encargado de '+(proc.organo||'este juzgado')+' (puedes cambiarlo)'; hint.style.display=''; }
+  } else {
+    sel.value='';
+    if(hint && proc.organo){ hint.textContent='Este juzgado no tiene encargado de Gestión asignado en Juzgados'; hint.style.display=''; }
+  }
+}
+
 function abrirModalAgendar(id){
   agendarProcesoId = id || null;
+  { const h=document.getElementById('ag-asig-hint'); if(h){h.style.display='none';h.textContent='';} }
   // Limpiar form
   ['ag-tipo','ag-asignado','ag-fecha','ag-hora','ag-agendadopor','ag-obs'].forEach(i=>{
     const el=document.getElementById(i);
@@ -7263,6 +7408,7 @@ function abrirModalAgendar(id){
         +'<span style="color:var(--text3)">'+esc(proc.expediente)+'</span>'
         +(proc.instancia?'<span class="badge b-n" style="margin-left:6px;font-size:10px">'+esc(proc.instancia)+'</span>':'');
       registrarVista('visualizó el proceso', '#'+id+' · '+(proc.cliente||'')+(proc.expediente?' · '+proc.expediente:''));
+      aplicarAsignadoPorJuzgado(proc);
     } else {
       info.innerHTML = '<strong>#'+id+'</strong>';
       registrarVista('visualizó el proceso', '#'+id);
@@ -7314,6 +7460,7 @@ function seleccionarProcesoModal(id){
   const proc = DATA.find(r=>r.id===id);
   if(!proc) return;
   agendarProcesoId = id;
+  aplicarAsignadoPorJuzgado(proc);
   // Cerrar dropdown
   document.getElementById('ag-id-dropdown').style.display='none';
   document.getElementById('ag-id').value = '#'+id+' — '+proc.cliente;
@@ -7328,6 +7475,7 @@ function seleccionarProcesoModal(id){
 
 function limpiarSeleccionProceso(){
   agendarProcesoId = null;
+  { const h=document.getElementById('ag-asig-hint'); if(h){h.style.display='none';h.textContent='';} }
   document.getElementById('ag-id').value = '';
   document.getElementById('ag-id-selected').style.display='none';
   document.getElementById('ag-id-dropdown').style.display='none';
