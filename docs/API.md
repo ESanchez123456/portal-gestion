@@ -1,11 +1,10 @@
 # Contrato de API esperado (backend Node → Data Warehouse)
-La app usa `DataBackend` (src/lib/backend/types.ts). Para pasar de Firebase a la API de TI: `NEXT_PUBLIC_DATA_BACKEND=api` + `NEXT_PUBLIC_API_URL`.
+La app usa `DataBackend` (src/lib/backend/types.ts). Hoy la app corre en modo `local` (sin usuarios ni Firebase; IndexedDB del navegador, solo pruebas). Para pasar a la API de TI: `NEXT_PUBLIC_DATA_BACKEND=api` + `NEXT_PUBLIC_API_URL`.
 Implementación de referencia del cliente: `src/lib/backend/apiBackend.ts`.
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | /auth/login · /auth/logout · /auth/reset | o SSO Microsoft (Entra ID) |
-| GET | /auth/me | usuario actual `{email}` |
+| GET | /me | usuario actual `{email, name?}` — la autenticación (SSO Microsoft/Entra ID) la resuelve el servidor; la app no maneja contraseñas |
 | GET | /kv | todo el almacén `{clave: valor}` (fase 1, compatible con hoy) |
 | PUT/DELETE | /kv/:key | escribir/borrar una clave |
 | GET | /kv/stream (SSE) o polling | cambios en vivo |

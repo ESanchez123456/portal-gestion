@@ -2,17 +2,14 @@ import type { AuditEntry } from '@/types';
 
 /**
  * Contrato de acceso a datos. La app SOLO habla con esta interfaz.
- * Hoy: Firebase (firebaseBackend). Mañana: API Node → Data Warehouse (apiBackend).
+ * Hoy: `local` (pruebas, en este navegador). Mañana: `api` (API Node → Data Warehouse).
  * Cambiar de backend = cambiar NEXT_PUBLIC_DATA_BACKEND, sin tocar las vistas.
  */
 export interface DataBackend {
-  /** Auth */
-  signIn(email: string, password: string): Promise<void>;
-  signOut(): Promise<void>;
-  resetPassword(email: string): Promise<void>;
-  onAuthChanged(cb: (user: { email: string } | null) => void): () => void;
+  /** Usuario actual. En modo local es fijo; con la API lo resuelve el servidor (SSO). */
+  getUser(): Promise<{ email: string; name?: string }>;
 
-  /** Almacén clave→valor compartido (hoy colección portal_kv). */
+  /** Almacén clave→valor compartido. */
   loadAllKV(): Promise<Record<string, string>>;
   listenKV(onChange: (changes: { key: string; value: string | null }[]) => void): () => void;
   setKV(key: string, value: string): Promise<void>;
