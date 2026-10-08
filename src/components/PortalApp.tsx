@@ -7,6 +7,7 @@ import { esAdmin, esUploaderAutorizado } from '@/lib/audit';
 import { cargarDatosExcelDesdeKV } from '@/lib/excel/publish';
 import { sincronizarJuzgadosConRT } from '@/lib/juzgados';
 import ModalHost from '@/components/ModalHost';
+import { useMobileCards } from '@/lib/useMobileCards';
 import ReporteView from '@/views/ReporteView';
 import AudienciasView from '@/views/AudienciasView';
 import GestionView from '@/views/GestionView';
@@ -23,6 +24,8 @@ export default function PortalApp() {
   const dataLabel = usePortal((s) => s.dataLabel);
   const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useMobileCards();
 
   // Carga inicial (sin login: el usuario lo da el backend; en modo local es fijo)
   useEffect(() => {
@@ -76,22 +79,23 @@ export default function PortalApp() {
             <div className="tb-logo">VT</div>
             <div><div className="tb-title">Portal Gestión <span className="tb-crumb">› Vinatea &amp; Toyama · CID</span></div></div>
           </div>
-          <nav className="tb-nav">
+          <button id="mnavBtn" className="mnav-btn" aria-label="Menú" onClick={() => setMenuOpen((v) => !v)}>{menuOpen ? '✕' : '☰'}</button>
+          <nav className={'tb-nav' + (menuOpen ? ' open' : '')}>
             {nav.filter((n) => n.show).map((n) => (
-              <div key={n.id} className={'tnav' + (activeTab === n.id ? ' active' : '')} onClick={() => setActiveTab(n.id)}>{n.label}</div>
+              <div key={n.id} className={'tnav' + (activeTab === n.id ? ' active' : '')} onClick={() => { setActiveTab(n.id); setMenuOpen(false); window.scrollTo(0, 0); }}>{n.label}</div>
             ))}
           </nav>
           <div className="tb-right">
-            {dataLabel && <span style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', marginRight: 10 }}>{dataLabel}</span>}
+            {dataLabel && <span className="tb-label" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', marginRight: 10 }}>{dataLabel}</span>}
             {user && (
               <div className="tb-user" style={{ display: 'flex' }}>
                 <div className="tb-user-av">{initials}</div>
-                <div><div>{user.name}</div><div className="tb-user-out" style={{ cursor: 'default', textDecoration: 'none' }}>Modo pruebas (local)</div></div>
+                <div className="tb-user-txt"><div>{user.name}</div><div className="tb-user-out" style={{ cursor: 'default', textDecoration: 'none' }}>Modo pruebas (local)</div></div>
               </div>
             )}
             {uploader && (
               <button className="tbtn-upload" style={{ display: 'flex' }} onClick={() => usePortal.getState().openModal('carga')}>
-                <span style={{ fontSize: 13 }}>↑</span> Cargar Excel
+                <span style={{ fontSize: 13 }}>↑</span> <span className="tb-up-txt">Cargar Excel</span>
               </button>
             )}
           </div>
